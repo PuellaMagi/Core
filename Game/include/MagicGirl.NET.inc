@@ -26,6 +26,12 @@
     #endinput
 #endif
 
+#if defined _MagicGirl_Core_Include_
+    #endinput
+#endif
+
+#define _MagicGirl_Core_Include_
+
 // core
 native void MG_Core_LogError(const char[] module = "Global", const char[] func = "Invalid Function", const char[] msg, any ...);
 native void MG_Core_LogMessage(const char[] module = "Global", const char[] func = "Invalid Function", const char[] msg, any ...);
