@@ -38,6 +38,7 @@ public Plugin myinfo =
 
 int g_iServerId = -1;
 int g_iServerPort = 27015;
+int g_iServerModId = -1;
 
 bool g_bConnected = false;
 
@@ -188,17 +189,11 @@ public int Native_LogMessage(Handle plugin, int numParams)
     LogToFileEx(path, "[%s] -> %s", func, message);
 }
 
-void CallForward(Handle fwd)
-{
-    Call_StartForward(fwd);
-    Call_Finish();
-}
-
 public void OnPluginStart()
 {
     // forwards
-    g_hOnConnected = CreateGlobalForward("MG_MySQL_OnConnected", ET_Ignore);
-    g_hOnAvailable = CreateGlobalForward("MG_Core_OnAvailable",  ET_Ignore);
+    g_hOnConnected = CreateGlobalForward("MG_MySQL_OnConnected", ET_Ignore, Param_Cell);
+    g_hOnAvailable = CreateGlobalForward("MG_Core_OnAvailable",  ET_Ignore, Param_Cell, Param_Cell);
 
     // connections
     ConnectToDatabase(0);
@@ -214,7 +209,9 @@ void ConnectToDatabase(int retry)
     if(g_hMySQL != null)
     {
         g_bConnected = true;
-        CallForward(g_hOnConnected);
+        Call_StartForward(g_hOnConnected);
+        Call_PushCell(g_hMySQL);
+        Call_Finish();
         return;
     }
 
@@ -238,6 +235,10 @@ public void OnConnected(Database db, const char[] error, int retry)
     
     PrintToServer("Database Connected!");
     
+    Call_StartForward(g_hOnConnected);
+    Call_PushCell(g_hMySQL);
+    Call_Finish();
+    
     // parse data
     CheckingServer();
 }
@@ -250,7 +251,7 @@ public Action Timer_Reconnect(Handle timer, int retry)
 
 public void NativeSave_Callback(Database db, DBResultSet results, const char[] error, DataPack pack)
 {
-    if(db == null || error[0])
+    if(results == null || error[0])
     {
         char m_szQueryString[2048];
         pack.Reset();
@@ -264,7 +265,7 @@ public void NativeSave_Callback(Database db, DBResultSet results, const char[] e
 void CheckingServer()
 {
     char m_szQuery[128];
-    FormatEx(m_szQuery, 128, "SELECT * FROM `core_servers` WHERE `ip` = '%s' AND `port` = '%d'", g_szServerIp, g_iServerPort);
+    FormatEx(m_szQuery, 128, "SELECT * FROM `dxg_servers` WHERE `ip` = '%s' AND `port` = '%d'", g_szServerIp, g_iServerPort);
     DBResultSet _result = SQL_Query(g_hMySQL, m_szQuery);
     if(_result == null)
     {
@@ -283,7 +284,8 @@ void CheckingServer()
     }
     
     g_iServerId = _result.FetchInt(0);
-    _result.FetchString(1, g_szHostName, 128);
+    g_iServerModId = _result.FetchInt(1);
+    _result.FetchString(2, g_szHostName, 128);
     
     delete _result;
 
@@ -291,7 +293,7 @@ void CheckingServer()
     SetConVarString(FindConVar("hostname"), g_szHostName, false, false);
 
     SaveInfoToKV();
-    
+
     // we used random rcon password.
     char[] password = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     int pos = 0;
@@ -299,10 +301,13 @@ void CheckingServer()
         g_szRconPswd[pos] = password[GetRandomInt(0, strlen(password)-1)];
     g_szRconPswd[pos] = '\0';
 
-    FormatEx(m_szQuery, 128, "UPDATE `core_servers` SET `rcon` = '%s' WHERE `sid` = '%d'", g_szRconPswd, g_iServerId);
+    FormatEx(m_szQuery, 128, "UPDATE `dxg_servers` SET `rcon` = '%s' WHERE `sid` = '%d'", g_szRconPswd, g_iServerId);
     MG_MySQL_SaveDatabase(m_szQuery);
 
-    CallForward(g_hOnAvailable);
+    Call_StartForward(g_hOnAvailable);
+    Call_PushCell(g_iServerId);
+    Call_PushCell(g_iServerModId);
+    Call_Finish();
 }
 
 void RetrieveInfoFromKV()
@@ -319,6 +324,7 @@ void RetrieveInfoFromKV()
         SetFailState("Connect to database error and kv load failed!");
     
     g_iServerId = kv.GetNum("ServerId", -1);
+    g_iServerModId = kv.GetNum("ServerModId", -1);
     kv.GetString("Hostname", g_szHostName, 128, "MagicGirl.NET - Server");
     
     delete kv;
@@ -326,7 +332,10 @@ void RetrieveInfoFromKV()
     if(g_iServerId == -1)
         SetFailState("Why your server id still is -1");
     
-    CallForward(g_hOnAvailable);
+    Call_StartForward(g_hOnAvailable);
+    Call_PushCell(g_iServerId);
+    Call_PushCell(g_iServerModId);
+    Call_Finish();
 }
 
 void SaveInfoToKV()
@@ -334,6 +343,7 @@ void SaveInfoToKV()
     KeyValues kv = new KeyValues("MagicGirl.Net");
     
     kv.SetNum("ServerId", g_iServerId);
+    kv.SetNum("ServerModId", g_iServerModId);
     kv.SetString("Hostname", g_szHostName);
     kv.Rewind();
 

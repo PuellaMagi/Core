@@ -32,6 +32,9 @@
 
 #define _MagicGirl_Core_Include_
 
+forward void MG_MySQL_OnConnected(Database mysql);
+forward void MG_Core_OnAvailable(int serverId, int modId);
+
 // core
 native void MG_Core_LogError(const char[] module = "Global", const char[] func = "Invalid Function", const char[] msg, any ...);
 native void MG_Core_LogMessage(const char[] module = "Global", const char[] func = "Invalid Function", const char[] msg, any ...);
