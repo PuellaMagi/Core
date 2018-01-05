@@ -165,7 +165,7 @@ void LoadClientAuth(int client, const char[] steamid)
     Database db = MG_MySQL_GetDatabase();
     
     char m_szQuery[256];
-    FormatEx(m_szQuery, 256, "SELECT b.uid,b.username,a.imm,a.spt,a.vip,a.ctb,a.opt,a.adm FROM dxg_users a LEFT JOIN dz_common_member b ON a.uid = b.uid WHERE a.steamid = '%s'", steamid);
+    FormatEx(m_szQuery, 256, "SELECT b.uid,b.username,a.imm,a.spt,a.vip,a.ctb,a.opt,a.adm,a.own FROM dxg_users a LEFT JOIN dz_common_member b ON a.uid = b.uid WHERE a.steamid = '%s'", steamid);
     db.Query(LoadClientCallback, m_szQuery, GetClientUserId(client));
 }
 
@@ -193,13 +193,14 @@ public void LoadClientCallback(Database db, DBResultSet results, const char[] er
     g_authClient[client][Ctb] = (results.FetchInt(5) == 1);
     g_authClient[client][Opt] = (results.FetchInt(6) == 1);
     g_authClient[client][Adm] = (results.FetchInt(7) == 1);
+    g_authClient[client][Own] = (results.FetchInt(8) == 1);
 
     if(g_authClient[client][Ctb] || g_authClient[client][Opt] || g_authClient[client][Adm])
     {
         AdminId _admin = GetUserAdmin(client);
         if(_admin != INVALID_ADMIN_ID)
             RemoveAdmin(_admin);
-        
+
         char username[32];
         results.FetchString(1, username, 32);
         _admin = CreateAdmin(username);
