@@ -63,7 +63,7 @@ public Action Command_Who(int client, int args)
     if(!IsValidClient(client))
         return Plugin_Handled;
     
-    static int _iLastUse[MAXPLAYERS+1];
+    static int _iLastUse[MAXPLAYERS+1] = {0, ...};
     
     if(_iLastUse[client] > GetTime() - 5)
         return Plugin_Handled;
@@ -78,7 +78,8 @@ public Action Command_Who(int client, int args)
 
 public Action Timer_PrintConsole(Handle timer, int client)
 {
-    static int _iCurrentIndex[MAXPLAYERS+1];
+    static int _iCurrentIndex[MAXPLAYERS+1] = {0, ...};
+    
     if(!IsClientInGame(client))
     {
         _iCurrentIndex[client] = 0;
@@ -88,13 +89,10 @@ public Action Timer_PrintConsole(Handle timer, int client)
     int left = 16; // we loop 16 clients one time.
     while(left--)
     {
-        int index = ++_iCurrentIndex[client];
+        if(_iCurrentIndex[client] == 0)
+            PrintToConsole(client, "#slot    userid      name      Supporter    Vip    Contributor    Operator    Administrator    Owner");
 
-        if(index == 0)
-        {
-            PrintToConsole(client, "#slot    userid      name      Supporter    Vip    Contributor    Operator    Administrator");
-            continue;
-        }
+        int index = ++_iCurrentIndex[client];
         
         if(index >= MaxClients)
         {
@@ -106,12 +104,12 @@ public Action Timer_PrintConsole(Handle timer, int client)
             continue;
         
         char strSlot[8], strUser[8];
-        StringPad(index, 4, ' ', strSlot);
-        StringPad(index, 6, ' ', strUser);
+        StringPad(index, 4, ' ', strSlot, 8);
+        StringPad(GetClientUserId(index), 6, ' ', strUser, 8);
         char strFlag[5][4];
         for(int x = 0; x < 5; ++x)
             TickOrCross(g_authClient[index][x], strFlag[x]);
-        PrintToConsole(client, "%s    %s    %N    %s    %s    %s    %s    %s", strSlot, strUser, index, strFlag[0], strFlag[1], strFlag[2], strFlag[3], strFlag[4]);
+        PrintToConsole(client, "#%s    %s    %N    %s    %s    %s    %s    %s", strSlot, strUser, index, strFlag[0], strFlag[1], strFlag[2], strFlag[3], strFlag[4]);
     }
 
     return Plugin_Continue;
@@ -262,16 +260,17 @@ stock bool IsValidClient(int index)
 }
 
 /* String.PadLeft */
-stock void StringPad(int number, int maxLen, char c, char[] output)
+stock void StringPad(int number, int length, char c, char[] output, int maxLen)
 {
-    char[] buffer = new char[maxLen];
-    IntToString(number, buffer, maxLen);
-    int padLen = maxLen - strlen(buffer);
+    char[] buffer = new char[length];
+    IntToString(number, buffer, length);
 
+    int padLen = length - strlen(buffer);
     for(int i = 0; i < padLen; ++i)
     {
         output[i] = c;
     }
+    output[padLen] = '\0';
 
     StrCat(output, maxLen, buffer);
 }
