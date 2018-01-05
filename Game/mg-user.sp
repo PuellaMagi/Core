@@ -195,11 +195,14 @@ public void LoadClientCallback(Database db, DBResultSet results, const char[] er
     g_authClient[client][Adm] = (results.FetchInt(7) == 1);
     g_authClient[client][Own] = (results.FetchInt(8) == 1);
 
-    if(g_authClient[client][Ctb] || g_authClient[client][Opt] || g_authClient[client][Adm])
+    if(g_authClient[client][Ctb] || g_authClient[client][Opt] || g_authClient[client][Adm] || g_authClient[client][Own])
     {
         AdminId _admin = GetUserAdmin(client);
         if(_admin != INVALID_ADMIN_ID)
+        {
             RemoveAdmin(_admin);
+            SetUserAdmin(client, INVALID_ADMIN_ID);
+        }
 
         char username[32];
         results.FetchString(1, username, 32);
@@ -211,7 +214,6 @@ public void LoadClientCallback(Database db, DBResultSet results, const char[] er
         _admin.SetFlag(Admin_Generic, true);
         _admin.SetFlag(Admin_Kick, true);
         _admin.SetFlag(Admin_Slay, true);
-        _admin.SetFlag(Admin_Changemap, true);
         _admin.SetFlag(Admin_Chat, true);
         _admin.SetFlag(Admin_Vote, true);
 
@@ -219,6 +221,7 @@ public void LoadClientCallback(Database db, DBResultSet results, const char[] er
         {
             _admin.SetFlag(Admin_Ban, true);
             _admin.SetFlag(Admin_Unban, true);
+            _admin.SetFlag(Admin_Changemap, true);
             
             if(g_authClient[client][Adm] || g_authClient[client][Own])
             {
@@ -231,6 +234,8 @@ public void LoadClientCallback(Database db, DBResultSet results, const char[] er
                 {
                     _admin.SetFlag(Admin_RCON, true);
                     _admin.SetFlag(Admin_Root, true);
+                    
+                    PrintToConsole(client, "[MagicGirl.Net]  You have been logon as [Owner]");
                 }
             }
         }
