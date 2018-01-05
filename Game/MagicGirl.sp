@@ -53,7 +53,6 @@ Database      g_hMySQL = null;
 EngineVersion g_Engine = Engine_Unknown;
 
 
-
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
 {
     // connections
@@ -162,13 +161,13 @@ public int Native_LogError(Handle plugin, int numParams)
     char module[32], func[64], format[256];
     GetNativeString(1, module,  32);
     GetNativeString(2, func,    64);
-    GetNativeString(2, format, 256);
+    GetNativeString(3, format, 256);
 
     char error[2048];
     FormatNativeString(0, 0, 4, 2048, _, error, format);
     
     char path[128];
-    BuildPath(Path_SM, path, 128, "logs/%s_err.log", module);
+    BuildPath(Path_SM, path, 128, "logs/MagicGirl.Net/%s_err.log", module);
     
     LogToFileEx(path, "[%s] -> %s", func, error);
 }
@@ -178,13 +177,13 @@ public int Native_LogMessage(Handle plugin, int numParams)
     char module[32], func[64], format[256];
     GetNativeString(1, module,  32);
     GetNativeString(2, func,    64);
-    GetNativeString(2, format, 256);
+    GetNativeString(3, format, 256);
 
     char message[2048];
     FormatNativeString(0, 0, 4, 2048, _, message, format);
     
     char path[128];
-    BuildPath(Path_SM, path, 128, "logs/%s_msg.log", module);
+    BuildPath(Path_SM, path, 128, "logs/MagicGirl.Net/%s_msg.log", module);
     
     LogToFileEx(path, "[%s] -> %s", func, message);
 }
@@ -197,6 +196,17 @@ public void OnPluginStart()
 
     // connections
     ConnectToDatabase(0);
+    
+    // log dir
+    CheckLogsDirectory();
+}
+
+public void CheckLogsDirectory()
+{
+    char path[128];
+    BuildPath(Path_SM, path, 128, "logs/MagicGirl.Net");
+    if(!DirExists(path))
+        CreateDirectory(path, 755);
 }
 
 void ConnectToDatabase(int retry)
@@ -204,7 +214,7 @@ void ConnectToDatabase(int retry)
     // connected?
     if(g_bConnected)
         return;
-    
+
     // not null
     if(g_hMySQL != null)
     {
