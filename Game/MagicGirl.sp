@@ -42,8 +42,8 @@ int g_iServerModId = -1;
 
 bool g_bConnected = false;
 
-char g_szServerIp[32]  = "127.0.0.1";
-char g_szRconPswd[32]  = "fuckMyLife";
+char g_szServerIp[24]  = "127.0.0.1";
+char g_szRconPswd[24]  = "fuckMyLife";
 char g_szHostName[128] = "MagicGirl.NET - Server";
 
 Handle g_hOnConnected = INVALID_HANDLE;
@@ -78,9 +78,8 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
     SetConVarInt(FindConVar("sv_hibernate_when_empty"), 0);
     g_Engine = GetEngineVersion();
     int ip = GetConVarInt(FindConVar("hostip"));
-    FormatEx(g_szServerIp, 32, "%d.%d.%d.%d", ((ip & 0xFF000000) >> 24) & 0xFF, ((ip & 0x00FF0000) >> 16) & 0xFF, ((ip & 0x0000FF00) >>  8) & 0xFF, ((ip & 0x000000FF) >>  0) & 0xFF);
-    // In Insurgency, hostport always is 27015.
-    g_iServerPort = (g_Engine == Engine_Insurgency) ? GetCommandLineParamInt("port", 27015) : GetConVarInt(FindConVar("hostport"));
+    FormatEx(g_szServerIp, 24, "%d.%d.%d.%d", ((ip & 0xFF000000) >> 24) & 0xFF, ((ip & 0x00FF0000) >> 16) & 0xFF, ((ip & 0x0000FF00) >>  8) & 0xFF, ((ip & 0x000000FF) >>  0) & 0xFF);
+    g_iServerPort = GetConVarInt(FindConVar("hostport"));
 
     return APLRes_Success;
 }
@@ -131,7 +130,7 @@ public int Native_SaveDatabase(Handle plugin, int numParams)
     DataPack data = new DataPack();
     data.WriteString(input);
 
-    g_hMySQL.Query(NativeSave_Callback, input);
+    g_hMySQL.Query(NativeSave_Callback, input, data);
     return;
 }
 
@@ -242,6 +241,7 @@ public void OnConnected(Database db, const char[] error, int retry)
 
     g_hMySQL = db;
     g_hMySQL.SetCharset("utf8");
+    g_bConnected = true;
     
     PrintToServer("Database Connected!");
     
@@ -275,7 +275,7 @@ public void NativeSave_Callback(Database db, DBResultSet results, const char[] e
 void CheckingServer()
 {
     char m_szQuery[128];
-    FormatEx(m_szQuery, 128, "SELECT * FROM `dxg_servers` WHERE `ip` = '%s' AND `port` = '%d'", g_szServerIp, g_iServerPort);
+    FormatEx(m_szQuery, 128, "SELECT * FROM `dxg_servers` WHERE `ip`='%s' AND `port`='%d'", g_szServerIp, g_iServerPort);
     DBResultSet _result = SQL_Query(g_hMySQL, m_szQuery);
     if(_result == null)
     {
@@ -299,19 +299,23 @@ void CheckingServer()
     
     delete _result;
 
-    SetConVarString(FindConVar("host_name_store"), "1", false, false);
+    if(g_Engine == Engine_CSGO)
+    {
+        // fix host name in gotv
+        ConVar host_name_store = FindConVar("host_name_store");
+        if(host_name_store != null)
+            host_name_store.SetString("1", false, false);
+    }
+
     SetConVarString(FindConVar("hostname"), g_szHostName, false, false);
 
     SaveInfoToKV();
 
     // we used random rcon password.
-    char[] password = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    int pos = 0;
-    for(; pos < 24; ++pos)
-        g_szRconPswd[pos] = password[GetRandomInt(0, strlen(password)-1)];
-    g_szRconPswd[pos] = '\0';
+    GenerateRandomString(g_szRconPswd, 24);
 
-    FormatEx(m_szQuery, 128, "UPDATE `dxg_servers` SET `rcon` = '%s' WHERE `sid` = '%d'", g_szRconPswd, g_iServerId);
+    // sync to database
+    FormatEx(m_szQuery, 128, "UPDATE `dxg_servers` SET `rcon`='%s' WHERE `sid`='%d';", g_szRconPswd, g_iServerId);
     MG_MySQL_SaveDatabase(m_szQuery);
 
     Call_StartForward(g_hOnAvailable);
@@ -362,4 +366,34 @@ void SaveInfoToKV()
     kv.ExportToFile(path);
     
     delete kv;
+}
+
+void GenerateRandomString(char[] buffer, int maxLen)
+{
+    // terminator
+    maxLen--;
+
+    char random[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234556789";
+    int randlen = strlen(random) - 1;
+
+    int n = 0;
+    int c = 0;
+
+    while(n < maxLen)
+    {
+        if(random[0] == '\0')
+        {
+            c = GetRandomInt(33, 126);
+            buffer[n] = c;
+        }
+        else
+        {
+            c = GetRandomInt(0, randlen);
+            buffer[n] = random[c];
+        }
+
+        n++;
+    }
+
+    buffer[maxLen] = '\0';
 }
