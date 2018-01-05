@@ -182,7 +182,7 @@ public void LoadClientCallback(Database db, DBResultSet results, const char[] er
         return;
     }
     
-    if(results.RowCount <= 0 || results.FetchRow())
+    if(results.RowCount <= 0 || !results.FetchRow())
     {
         CallForward(client);
         return;
@@ -234,13 +234,13 @@ public void LoadClientCallback(Database db, DBResultSet results, const char[] er
                 {
                     _admin.SetFlag(Admin_RCON, true);
                     _admin.SetFlag(Admin_Root, true);
-                    
-                    PrintToConsole(client, "[MagicGirl.Net]  You have been logon as [Owner]");
                 }
             }
         }
 
-        RunAdminCacheChecks(client);
+        // we give admin perm before client admin check
+        if(IsClientInGame(client))
+            RunAdminCacheChecks(client);
     }
     
     CallForward(client);
