@@ -26,6 +26,15 @@
 #define PI_VERS Core_Version ... " " ... APIs_Version ... " " ... "<commit-count>"
 #define PI_URLS THIS_URLINK
 
+public Plugin myinfo = 
+{
+    name        = PI_NAME,
+    author      = PI_AUTH,
+    description = PI_DESC,
+    version     = PI_VERS,
+    url         = PI_URLS
+};
+
 bool g_authClient[MAXPLAYERS+1][Authentication];
 
 Handle g_hOnUMChecked;
@@ -44,7 +53,7 @@ public int Native_IsAuthorized(Handle plugin, int numParams)
 public void OnPluginStart()
 {
     // console command
-    RegConsoleCmd("sm_who", Command_Who);
+    AddCommandListener(Command_Who, "sm_who");
 
     // global forwards
     g_hOnUMChecked = CreateGlobalForward("OnClientAuthCheck", ET_Ignore, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell);
@@ -58,11 +67,11 @@ public void OnRebuildAdminCache(AdminCachePart part)
                 OnClientAuthorized(client, "");
 }
 
-public Action Command_Who(int client, int args)
+public Action Command_Who(int client, const char[] command, int argc)
 {
     if(!IsValidClient(client))
         return Plugin_Handled;
-    
+
     static int _iLastUse[MAXPLAYERS+1] = {0, ...};
     
     if(_iLastUse[client] > GetTime() - 5)
