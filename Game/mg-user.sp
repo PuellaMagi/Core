@@ -38,19 +38,110 @@ public Plugin myinfo =
 int  g_iUserId[MAXPLAYERS+1];
 bool g_authClient[MAXPLAYERS+1][Authentication];
 bool g_bAuthLoaded[MAXPLAYERS+1];
+bool g_bBanChecked[MAXPLAYERS+1];
 char g_szUsername[MAXPLAYERS+1][32];
 
 Handle g_hOnUMChecked;
 
+static char g_banType[3][32] = {"全服封禁", "当前模式封禁", "当前服务器封禁"};
+
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
 {
+    // Auth
     CreateNative("MG_UM_IsAuthorized", Native_IsAuthorized);
+    
+    // Banning
+    CreateNative("MG_UM_BanClient",    Native_BanClient);
+    CreateNative("MG_UM_BanIdentity",  Native_BanIdentity);
+
     return APLRes_Success;
 }
 
 public int Native_IsAuthorized(Handle plugin, int numParams)
 {
     return g_authClient[GetNativeCell(1)][GetNativeCell(2)];
+}
+
+public int Native_BanClient(Handle plugin, int numParams)
+{
+    int admin  = GetNativeCell(1);
+    int target = GetNativeCell(2);
+    int btype  = GetNativeCell(3);
+    int length = GetNativeCell(4);
+    char reason[128];
+    GetNativeString(5, reason, 128);
+
+    if(MG_Core_GetServerId() < 0)
+        return;
+    
+    if(!MG_MySQL_IsConnected())
+        return;
+    
+    Database db = MG_MySQL_GetDatabase();
+
+    char ip[24];
+    GetClientIP(target, ip, 24, false);
+    
+    char name[64], nickname[128];
+    GetClientName(target, name, 64);
+    db.Escape(name, nickname, 128);
+    
+    char adminName[64];
+    db.Escape(g_szUsername[admin], adminName, 64);
+
+    char bReason[256];
+    db.Escape(reason, bReason, 256);
+    
+    char steamid[32];
+    if(!GetClientAuthId(target, AuthId_SteamID64, steamid, 32, true))
+    {
+        MG_Core_LogError("User", "Native_BanClient", "We can not fetch target`s steamid64 -> \"%L\"", target);
+        return;
+    }
+
+    char m_szQuery[1024];
+    FormatEx(m_szQuery, 1024, "INSERT INTO dxg_bans VALUES (DEFAULT, '%s', '%s', '%s', %d, %d, %d, %d, %d, %d, '%s', '%s', -1);", steamid, ip, nickname, GetTime()+length*60, btype, MG_Core_GetServerId(), MG_Core_GetServerModId(), g_iUserId[admin], g_szUsername[admin], bReason);
+    
+    DataPack pack = new DataPack();
+    pack.WriteCell(admin);
+    pack.WriteCell(GetClientUserId(target));
+    pack.WriteCell(btype);
+    pack.WriteCell(length);
+    pack.WriteString(reason);
+    pack.WriteString(m_szQuery);
+
+    db.Query(BanClientCallback, m_szQuery, pack);
+}
+
+public int Native_BanIdentity(Handle plugin, int numParams)
+{
+    int admin = GetNativeCell(1);
+    
+    char steamIdentity[32];
+    GetNativeString(2, steamIdentity, 32);
+
+    int btype  = GetNativeCell(3);
+    int length = GetNativeCell(4);
+    char reason[128];
+    GetNativeString(5, reason, 128);
+    
+    if(MG_Core_GetServerId() < 0)
+        return;
+
+    // we using php auto-check target`s steam nickname.
+
+    char adminName[64];
+    MG_MySQL_EscapeString(g_szUsername[admin], adminName, 64);
+
+    char bReason[256];
+    MG_MySQL_EscapeString(reason, bReason, 256);
+
+    char m_szQuery[1024];
+    FormatEx(m_szQuery, 1024, "INSERT INTO dxg_bans VALUES (DEFAULT, '%s', '127.0.0.1', 'php_auto_check', %d, %d, %d, %d, %d, %d, '%s', '%s', -1);", steamIdentity, GetTime()+length*60, btype, MG_Core_GetServerId(), MG_Core_GetServerModId(), g_iUserId[admin], g_szUsername[admin], bReason);
+
+    MG_MySQL_SaveDatabase(m_szQuery);
+    
+    PrintToChatAll(" \07*** \x02BAN \07***  \x05%s\x04已被伺服器封锁!", steamIdentity);
 }
 
 public void OnPluginStart()
@@ -64,12 +155,15 @@ public void OnPluginStart()
     // init console
     g_iUserId[0] = 0;
     g_szUsername[0] = "CONSOLE";
+}
+
 public void OnClientConnected(int client)
 {
     for(int i = 0; i < view_as<int>(Authentication); ++i)
         g_authClient[client][i] = false;
 
     g_bAuthLoaded[client] = false;
+    g_bBanChecked[client] = false;
     g_szUsername[client][0] = '\0';
 }
 
@@ -152,6 +246,7 @@ public void OnClientAuthorized(int client, const char[] auth)
     }
 
     LoadClientAuth(client, steamid);
+    CheckClientBanStats(client, steamid);
 }
 
 public Action Timer_ReAuthorize(Handle timer, int client)
@@ -167,6 +262,7 @@ public Action Timer_ReAuthorize(Handle timer, int client)
     }
 
     LoadClientAuth(client, steamid);
+    CheckClientBanStats(client, steamid);
     
     return Plugin_Stop;
 }
@@ -190,12 +286,31 @@ void LoadClientAuth(int client, const char[] steamid)
     db.Query(LoadClientCallback, m_szQuery, GetClientUserId(client));
 }
 
+void CheckClientBanStats(int client, const char[] steamid)
+{
+    if(g_bBanChecked[client])
+        return;
+    
+    if(!MG_MySQL_IsConnected())
+    {
+        MG_Core_LogError("User", "LoadClientAuth", "Error: SQL is unavailable -> \"%L\"", client);
+        CreateTimer(5.0, Timer_ReAuthorize, client);
+        return;
+    }
+
+    Database db = MG_MySQL_GetDatabase();
+
+    char m_szQuery[256];
+    FormatEx(m_szQuery, 256, "SELECT bType, bSrv, bSrvMod, bCreated, bLength, bReason FROM dxg_bans WHERE steamid = '%s' AND bRemovedBy == -1", steamid);
+    db.Query(CheckBanCallback, m_szQuery, GetClientUserId(client));
+}
+
 public void LoadClientCallback(Database db, DBResultSet results, const char[] error, int userid)
 {
     int client = GetClientOfUserId(userid);
     if(!client)
         return;
-    
+
     if(results == null || error[0])
     {
         MG_Core_LogError("User", "LoadClientCallback", "SQL Error:  %s -> \"%L\"", error, client);
@@ -267,6 +382,102 @@ public void LoadClientCallback(Database db, DBResultSet results, const char[] er
     }
     
     CallForward(client);
+}
+
+public void CheckBanCallback(Database db, DBResultSet results, const char[] error, int userid)
+{
+    int client = GetClientOfUserId(userid);
+    if(!client)
+        return;
+
+    if(results == null || error[0])
+    {
+        MG_Core_LogError("User", "CheckBanCallback", "SQL Error:  %s -> \"%L\"", error, client);
+        CreateTimer(5.0, Timer_ReAuthorize, client);
+        return;
+    }
+    
+    g_bBanChecked[client] = true;
+    
+    if(results.RowCount <= 0)
+        return;
+
+    while(results.FetchRow())
+    {
+        //bType, bSrv, bSrvMod, bCreated, bLength, bReason 
+
+        char bReason[32];
+        int bType    = results.FetchInt(0);
+        int bSrv     = results.FetchInt(1);
+        int bSrvMod  = results.FetchInt(2);
+        int bCreated = results.FetchInt(3);
+        int bLength  = results.FetchInt(4);
+        results.FetchString(5, bReason, 32);
+
+        /* process results */
+        
+        // if srv ban and current server id != ban server id
+        if(bType == 2 && MG_Core_GetServerId() != bSrv)
+            continue;
+        
+        // if mod ban and current server mod != ban mod id
+        if(bType == 1 && MG_Core_GetServerModId() != bSrvMod)
+            continue;
+
+        char timeExpired[64];
+        if(bLength != 0)
+            FormatTime(timeExpired, 64, "%Y.%m.%d %H:%M:%S", bCreated+bLength);
+        else
+            FormatEx(timeExpired, 64, "永久封禁");
+
+        char kickReason[256];
+        FormatEx(kickReason, 256, "您已被服务器封锁,禁止进入游戏!\n类型: %s\n原因: %s\n到期: %s\n访问https://ban.magicgirl.net/查看详细信息", g_banType[bType], bReason, timeExpired);
+        //KickClient(client, kickReason);
+        BanClient(client, 5, BANFLAG_AUTHID, kickReason, kickReason);
+
+        break;
+    }
+}
+
+public void BanClientCallback(Database db, DBResultSet results, const char[] error, DataPack pack)
+{
+    pack.Reset();
+    int admin  = pack.ReadCell();
+    int target = pack.ReadCell(); target = GetClientOfUserId(target);
+    int btype  = pack.ReadCell();
+    int length = pack.ReadCell();
+    char reason[128];
+    pack.ReadString(reason, 128);
+    char query[1024];
+    pack.ReadString(query, 1024);
+    delete pack;
+
+    if(results == null || error[0])
+    {
+        MG_Core_LogError("User", "BanClientCallback", "SQL Error:  %s -> \n%s", error, query);
+        return;
+    }
+    
+    if(!target || !IsClientConnected(target))
+        return;
+    
+    char adminName[32];
+    if(IsClientInGame(admin))
+        GetClientName(admin, adminName, 32);
+    else
+        strcopy(adminName, 32, g_szUsername[admin]);
+
+    PrintToChatAll(" \07*** \x02BAN \07***  \x05%N\01已被管理员\x04%s\x01封锁,原因: \x0A%s", target, adminName, reason);
+    
+    char timeExpired[64];
+    if(length != 0)
+        FormatTime(timeExpired, 64, "%Y.%m.%d %H:%M:%S", GetTime()+length*60);
+    else
+        FormatEx(timeExpired, 64, "永久封禁");
+
+    char kickReason[256];
+    FormatEx(kickReason, 256, "您已被服务器封锁,禁止进入游戏!\n类型: %s\n原因: %s\n到期: %s\n访问https://ban.magicgirl.net/查看详细信息", g_banType[btype], reason, timeExpired);
+    BanClient(target, 5, BANFLAG_AUTHID, kickReason, kickReason);
 }
 
 void CallForward(int client)
