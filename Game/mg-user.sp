@@ -35,7 +35,10 @@ public Plugin myinfo =
     url         = PI_URLS
 };
 
+int  g_iUserId[MAXPLAYERS+1];
 bool g_authClient[MAXPLAYERS+1][Authentication];
+bool g_bAuthLoaded[MAXPLAYERS+1];
+char g_szUsername[MAXPLAYERS+1][32];
 
 Handle g_hOnUMChecked;
 
@@ -57,6 +60,17 @@ public void OnPluginStart()
 
     // global forwards
     g_hOnUMChecked = CreateGlobalForward("OnClientAuthCheck", ET_Ignore, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell);
+
+    // init console
+    g_iUserId[0] = 0;
+    g_szUsername[0] = "CONSOLE";
+public void OnClientConnected(int client)
+{
+    for(int i = 0; i < view_as<int>(Authentication); ++i)
+        g_authClient[client][i] = false;
+
+    g_bAuthLoaded[client] = false;
+    g_szUsername[client][0] = '\0';
 }
 
 public void OnRebuildAdminCache(AdminCachePart part)
@@ -126,9 +140,6 @@ public Action Timer_PrintConsole(Handle timer, int client)
 
 public void OnClientAuthorized(int client, const char[] auth)
 {
-    for(int i = 0; i < view_as<int>(Authentication); ++i)
-        g_authClient[client][i] = false;
-
     if(strcmp(auth, "BOT") == 0 || IsFakeClient(client) || IsClientSourceTV(client))
         return;
     
@@ -162,6 +173,9 @@ public Action Timer_ReAuthorize(Handle timer, int client)
 
 void LoadClientAuth(int client, const char[] steamid)
 {
+    if(g_bAuthLoaded[client])
+        return; 
+
     if(!MG_MySQL_IsConnected())
     {
         MG_Core_LogError("User", "LoadClientAuth", "Error: SQL is unavailable -> \"%L\"", client);
@@ -172,7 +186,7 @@ void LoadClientAuth(int client, const char[] steamid)
     Database db = MG_MySQL_GetDatabase();
     
     char m_szQuery[256];
-    FormatEx(m_szQuery, 256, "SELECT b.uid,b.username,a.imm,a.spt,a.vip,a.ctb,a.opt,a.adm,a.own FROM dxg_users a LEFT JOIN dz_common_member b ON a.uid = b.uid WHERE a.steamid = '%s'", steamid);
+    FormatEx(m_szQuery, 256, "SELECT id, username, imm, spt, vip, ctb, opt, adm, own FROM dxg_users WHERE steamid = '%s'", steamid);
     db.Query(LoadClientCallback, m_szQuery, GetClientUserId(client));
 }
 
@@ -189,12 +203,16 @@ public void LoadClientCallback(Database db, DBResultSet results, const char[] er
         return;
     }
     
+    g_bAuthLoaded[client] = true;
+    
     if(results.RowCount <= 0 || !results.FetchRow())
     {
         CallForward(client);
         return;
     }
-
+    
+    g_iUserId[client] = results.FetchInt(0);
+    results.FetchString(1, g_szUsername[client], 32);
     g_authClient[client][Spt] = (results.FetchInt(3) == 1);
     g_authClient[client][Vip] = (results.FetchInt(4) == 1);
     g_authClient[client][Ctb] = (results.FetchInt(5) == 1);
@@ -211,9 +229,7 @@ public void LoadClientCallback(Database db, DBResultSet results, const char[] er
             SetUserAdmin(client, INVALID_ADMIN_ID);
         }
 
-        char username[32];
-        results.FetchString(1, username, 32);
-        _admin = CreateAdmin(username);
+        _admin = CreateAdmin(g_szUsername[client]);
         SetUserAdmin(client, _admin, true);
         SetAdminImmunityLevel(_admin, results.FetchInt(2));
 
