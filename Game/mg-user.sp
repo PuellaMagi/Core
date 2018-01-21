@@ -348,7 +348,7 @@ void CheckClientBanStats(int client, const char[] steamid)
     Database db = MG_MySQL_GetDatabase();
 
     char m_szQuery[256];
-    FormatEx(m_szQuery, 256, "SELECT bType, bSrv, bSrvMod, bCreated, bLength, bReason FROM dxg_bans WHERE steamid = '%s' AND bRemovedBy == -1", steamid);
+    FormatEx(m_szQuery, 256, "SELECT bType, bSrv, bSrvMod, bCreated, bLength, bReason FROM dxg_bans WHERE steamid = '%s' AND bRemovedBy = -1", steamid);
     db.Query(CheckBanCallback, m_szQuery, GetClientUserId(client));
 }
 

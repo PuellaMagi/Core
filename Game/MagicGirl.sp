@@ -104,8 +104,8 @@ public int Native_EscapeString(Handle plugin, int numParams)
     // dynamic length
     int inLen = 0;
     GetNativeStringLength(1, inLen);
-    char[] input = new char[inLen];
-    if(GetNativeString(1, input, inLen) != SP_ERROR_NONE)
+    char[] input = new char[inLen+1];
+    if(GetNativeString(1, input, inLen+1) != SP_ERROR_NONE)
         return false;
     
     char[] output = new char[inLen * 2];
@@ -124,8 +124,8 @@ public int Native_SaveDatabase(Handle plugin, int numParams)
     // dynamic length
     int inLen = 0;
     GetNativeStringLength(1, inLen);
-    char[] input = new char[inLen];
-    if(GetNativeString(1, input, inLen) != SP_ERROR_NONE)
+    char[] input = new char[inLen+1];
+    if(GetNativeString(1, input, inLen+1) != SP_ERROR_NONE)
         return;
     
     DataPack data = new DataPack();
@@ -144,8 +144,8 @@ public int Native_ExecDatabase(Handle plugin, int numParams)
     // dynamic length
     int inLen = 0;
     GetNativeStringLength(1, inLen);
-    char[] input = new char[inLen];
-    if(GetNativeString(1, input, inLen) != SP_ERROR_NONE)
+    char[] input = new char[inLen+1];
+    if(GetNativeString(1, input, inLen+1) != SP_ERROR_NONE)
         return view_as<int>(INVALID_HANDLE);
 
     return view_as<int>(SQL_Query(g_hMySQL, input));

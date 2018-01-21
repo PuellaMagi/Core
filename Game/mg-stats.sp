@@ -161,7 +161,7 @@ public void OnClientDataChecked(int client, int uid)
     Database db = MG_MySQL_GetDatabase();
     
     char m_szQuery[128];
-    FormatEx(m_szQuery, 128, "SELECT onlineTotal, onlineToday, onlineOB, onlinePlay, connectTimes, vitality FROM dxg_stats WHEERE uid = %d", uid);
+    FormatEx(m_szQuery, 128, "SELECT onlineTotal, onlineToday, onlineOB, onlinePlay, connectTimes, vitality FROM dxg_stats WHERE uid = %d", uid);
     db.Query(LoadClientCallback, m_szQuery, GetClientUserId(client));
 }
 
@@ -176,7 +176,7 @@ public void OnClientDisconnect(int client)
         return;
     
     char m_szQuery[512];
-    FormatEx(m_szQuery, 512, "UPDATE dxg_stats AS a, dxg_analytics AS b SET a.connectTimes=a.connectTimes+1, a.onlineToday=a.onlineToday+%d, a.onlineTotal=a.onlineTotal+%d, a.onlineOB=a.onlineOB+%d, a.onlinePlay=a.onlinePlay+%d, b.duration=%d WHERE a.uid=%d AND b.id=%d", g_StatsClient[client][STATS_SESSION][iTodayOnlineTime], g_StatsClient[client][STATS_SESSION][iTotalOnlineTime], g_StatsClient[client][STATS_SESSION][iObserveOnlineTime], g_StatsClient[client][STATS_SESSION][iPlayOnlineTime], g_StatsClient[client][STATS_SESSION][iTotalOnlineTime]);
+    FormatEx(m_szQuery, 512, "UPDATE dxg_stats AS a, dxg_analytics AS b SET a.connectTimes=a.connectTimes+1, a.onlineToday=a.onlineToday+%d, a.onlineTotal=a.onlineTotal+%d, a.onlineOB=a.onlineOB+%d, a.onlinePlay=a.onlinePlay+%d, b.duration=%d WHERE a.uid=%d AND b.id=%d", g_StatsClient[client][STATS_SESSION][iTodayOnlineTime], g_StatsClient[client][STATS_SESSION][iTotalOnlineTime], g_StatsClient[client][STATS_SESSION][iObserveOnlineTime], g_StatsClient[client][STATS_SESSION][iPlayOnlineTime], g_StatsClient[client][STATS_SESSION][iTotalOnlineTime], MG_Users_UserIdentity(client), g_iTrackingId[client]);
     MG_MySQL_SaveDatabase(m_szQuery);
 }
 
@@ -264,7 +264,7 @@ public void InserAnalyticsCallback(Database db, DBResultSet results, const char[
 
 public Action Timer_Client(Handle timer, int client)
 {
-    if(GetClientTeam(client) > TEAM_OB)
+    if(IsClientInGame(client) && GetClientTeam(client) > TEAM_OB)
     {
         g_StatsClient[client][STATS_SESSION][iPlayOnlineTime]++;
     }
