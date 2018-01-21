@@ -3,7 +3,7 @@
 /*                  MagicGirl.NET User Manager                    */
 /*                                                                */
 /*                                                                */
-/*  File:          mg-admins.sp                                   */
+/*  File:          mg-user.sp                                     */
 /*  Description:   Interconnector of Game and Forum.              */
 /*                                                                */
 /*                                                                */
