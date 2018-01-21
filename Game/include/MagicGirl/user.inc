@@ -3,7 +3,7 @@
 /*                  MagicGirl.NET User Manager                    */
 /*                                                                */
 /*                                                                */
-/*  File:          mg-user.sp                                     */
+/*  File:          user.inc                                       */
 /*  Description:   Interconnector of Game and Forum.              */
 /*                                                                */
 /*                                                                */
@@ -33,6 +33,7 @@ enum Authentication
 
 forward void OnClientAuthChecked(int client, bool Spt, bool Vip, bool Ctb, bool Opt, bool Adm, bool Own);
 forward void OnClientDataChecked(int client, int UserIdentity);
+native int  MG_Users_UserIdentity(int client);
 native bool MG_Users_IsAuthorized(int client, Authentication auth);
 native void MG_Users_BanClient(int admin,  int target, int banType, int banLength, const char[] banReason);
 native void MG_Users_BanIdentity(int admin, const char[] steamIdentity, int banType, int banLength, const char[] banReason);

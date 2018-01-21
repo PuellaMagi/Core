@@ -57,6 +57,9 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
     // Banning
     CreateNative("MG_Users_BanClient",    Native_BanClient);
     CreateNative("MG_Users_BanIdentity",  Native_BanIdentity);
+    
+    // lib
+    RegPluginLibrary("mg-user");
 
     return APLRes_Success;
 }
