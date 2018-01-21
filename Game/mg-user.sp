@@ -41,7 +41,8 @@ bool g_bAuthLoaded[MAXPLAYERS+1];
 bool g_bBanChecked[MAXPLAYERS+1];
 char g_szUsername[MAXPLAYERS+1][32];
 
-Handle g_hOnUMChecked;
+Handle g_hOnUMAuthChecked;
+Handle g_hOnUMDataChecked;
 
 static char g_banType[3][32] = {"全服封禁", "当前模式封禁", "当前服务器封禁"};
 
@@ -49,6 +50,9 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 {
     // Auth
     CreateNative("MG_UM_IsAuthorized", Native_IsAuthorized);
+    
+    // Identity
+    CreateNative("MG_UM_UserIdentity", Native_UserIdentity);
     
     // Banning
     CreateNative("MG_UM_BanClient",    Native_BanClient);
@@ -60,6 +64,11 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 public int Native_IsAuthorized(Handle plugin, int numParams)
 {
     return g_authClient[GetNativeCell(1)][GetNativeCell(2)];
+}
+
+public int Native_UserIdentity(Handle plugin, int numParams)
+{
+    return g_iUserId[GetNativeCell(1)];
 }
 
 public int Native_BanClient(Handle plugin, int numParams)
@@ -150,7 +159,8 @@ public void OnPluginStart()
     AddCommandListener(Command_Who, "sm_who");
 
     // global forwards
-    g_hOnUMChecked = CreateGlobalForward("OnClientAuthChecked", ET_Ignore, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell);
+    g_hOnUMAuthChecked = CreateGlobalForward("OnClientAuthChecked", ET_Ignore, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell);
+    g_hOnUMDataChecked = CreateGlobalForward("OnClientDataChecked", ET_Ignore, Param_Cell, Param_Cell);
 
     // init console
     g_iUserId[0] = 0;
@@ -165,6 +175,37 @@ public void OnClientConnected(int client)
     g_bAuthLoaded[client] = false;
     g_bBanChecked[client] = false;
     g_szUsername[client][0] = '\0';
+    
+    g_iUserId[client] = 0;
+}
+
+// we call this forward after client is fully in-game.
+// this forward -> tell other plugins, we are available, allow to load client`s data.
+public void OnClientPutInServer(int client)
+{
+    if(IsFakeClient(client) || IsClientSourceTV(client))
+    {
+        CallDataForward(client);
+        return;
+    }
+
+    if(!g_bAuthLoaded[client] || g_iUserId[client] <= 0)
+    {
+        CreateTimer(1.0, Timer_Waiting, client);
+        return;
+    }
+
+    CallDataForward(client);
+}
+
+public Action Timer_Waiting(Handle timer, int client)
+{
+    if(!IsClientInGame(client))
+        return Plugin_Stop;
+    
+    OnClientPutInServer(client);
+
+    return Plugin_Stop;
 }
 
 public void OnRebuildAdminCache(AdminCachePart part)
@@ -236,7 +277,7 @@ public void OnClientAuthorized(int client, const char[] auth)
 {
     if(strcmp(auth, "BOT") == 0 || IsFakeClient(client) || IsClientSourceTV(client))
     {
-        CallForward(client);
+        CallAuthForward(client);
         return;
     }
 
@@ -293,7 +334,7 @@ void CheckClientBanStats(int client, const char[] steamid)
 {
     if(g_bBanChecked[client])
         return;
-    
+
     if(!MG_MySQL_IsConnected())
     {
         MG_Core_LogError("User", "LoadClientAuth", "Error: SQL is unavailable -> \"%L\"", client);
@@ -322,13 +363,14 @@ public void LoadClientCallback(Database db, DBResultSet results, const char[] er
     }
     
     g_bAuthLoaded[client] = true;
-    
+
     if(results.RowCount <= 0 || !results.FetchRow())
     {
-        CallForward(client);
+        InsertNewUserData(client);
+        CallAuthForward(client);
         return;
     }
-    
+
     g_iUserId[client] = results.FetchInt(0);
     results.FetchString(1, g_szUsername[client], 32);
     g_authClient[client][Spt] = (results.FetchInt(3) == 1);
@@ -384,7 +426,39 @@ public void LoadClientCallback(Database db, DBResultSet results, const char[] er
             RunAdminCacheChecks(client);
     }
     
-    CallForward(client);
+    CallAuthForward(client);
+}
+
+void InsertNewUserData(int client)
+{
+    char steamid[32];
+    if(!GetClientAuthId(client, AuthId_SteamID64, steamid, 32, true))
+    {
+        KickClient(client, "系统无法获取您的SteamID");
+        return;
+    }
+
+    char m_szQuery[128];
+    FormatEx(m_szQuery, 128, "INSERT INTO dxg_users (`steamid`, `firstjoin`) VALUES ('%s', %d);", steamid, GetTime());
+    MG_MySQL_GetDatabase().Query(InserUserCallback, m_szQuery, GetClientUserId(client));
+}
+
+public void InserUserCallback(Database db, DBResultSet results, const char[] error, int userid)
+{
+    int client = GetClientOfUserId(userid);
+    if(!client)
+        return;
+    
+    if(results == null || error[0])
+    {
+        MG_Core_LogError("User", "CheckBanCallback", "SQL Error:  %s -> \"%L\"", error, client);
+        CreateTimer(5.0, Timer_ReAuthorize, client);
+        return;
+    }
+
+    // Refresh client
+    OnClientConnected(client);
+    CreateTimer(1.0, Timer_ReAuthorize, client);
 }
 
 public void CheckBanCallback(Database db, DBResultSet results, const char[] error, int userid)
@@ -483,12 +557,20 @@ public void BanClientCallback(Database db, DBResultSet results, const char[] err
     BanClient(target, 5, BANFLAG_AUTHID, kickReason, kickReason);
 }
 
-void CallForward(int client)
+void CallAuthForward(int client)
 {
-    Call_StartForward(g_hOnUMChecked);
+    Call_StartForward(g_hOnUMAuthChecked);
     Call_PushCell(client);
     for(int i = 0; i < view_as<int>(Authentication); ++i)
         Call_PushCell(g_authClient[client][i]);
+    Call_Finish();
+}
+
+void CallDataForward(int client)
+{
+    Call_StartForward(g_hOnUMDataChecked);
+    Call_PushCell(client);
+    Call_PushCell(g_iUserId[client]);
     Call_Finish();
 }
 
@@ -582,3 +664,27 @@ stock int CharToNumber(const int cNum)
 {
     return (cNum >= '0' && cNum <= '9') ? (cNum - '0') : 0;
 }
+
+/* 
+    SQL String 
+
+CREATE TABLE `dxg_users` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `steamid` bigint(20) unsigned NOT NULL DEFAULT '0',
+  `username` varchar(32) NOT NULL DEFAULT 'unnamed',
+  `imm` tinyint(3) unsigned NOT NULL DEFAULT '0' COMMENT 'AdminImmunityLevel',
+  `spt` tinyint(2) unsigned NOT NULL DEFAULT '0',
+  `vip` tinyint(2) unsigned NOT NULL DEFAULT '0',
+  `ctb` tinyint(2) unsigned NOT NULL DEFAULT '0',
+  `opt` tinyint(2) unsigned NOT NULL DEFAULT '0',
+  `adm` tinyint(2) unsigned NOT NULL DEFAULT '0',
+  `own` tinyint(2) unsigned NOT NULL DEFAULT '0',
+  `money` bigint(20) unsigned NOT NULL DEFAULT '0',
+  `firstjoin` int(11) unsigned NOT NULL DEFAULT '0',
+  `lastseen` int(11) unsigned NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `steam_unique` (`steamid`),
+  UNIQUE KEY `bind_unique` (`id`,`steamid`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
+
+*/
