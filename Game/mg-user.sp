@@ -49,14 +49,14 @@ static char g_banType[3][32] = {"全服封禁", "当前模式封禁", "当前服
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
 {
     // Auth
-    CreateNative("MG_UM_IsAuthorized", Native_IsAuthorized);
+    CreateNative("MG_Users_IsAuthorized", Native_IsAuthorized);
     
     // Identity
-    CreateNative("MG_UM_UserIdentity", Native_UserIdentity);
+    CreateNative("MG_Users_UserIdentity", Native_UserIdentity);
     
     // Banning
-    CreateNative("MG_UM_BanClient",    Native_BanClient);
-    CreateNative("MG_UM_BanIdentity",  Native_BanIdentity);
+    CreateNative("MG_Users_BanClient",    Native_BanClient);
+    CreateNative("MG_Users_BanIdentity",  Native_BanIdentity);
 
     return APLRes_Success;
 }

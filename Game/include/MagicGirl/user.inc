@@ -33,9 +33,9 @@ enum Authentication
 
 forward void OnClientAuthChecked(int client, bool Spt, bool Vip, bool Ctb, bool Opt, bool Adm, bool Own);
 forward void OnClientDataChecked(int client, int UserIdentity);
-native bool MG_UM_IsAuthorized(int client, Authentication auth);
-native void MG_UM_BanClient(int admin,  int target, int banType, int banLength, const char[] banReason);
-native void MG_UM_BanIdentity(int admin, const char[] steamIdentity, int banType, int banLength, const char[] banReason);
+native bool MG_Users_IsAuthorized(int client, Authentication auth);
+native void MG_Users_BanClient(int admin,  int target, int banType, int banLength, const char[] banReason);
+native void MG_Users_BanIdentity(int admin, const char[] steamIdentity, int banType, int banLength, const char[] banReason);
 
 public SharedPlugin __pl_mg_user =
 {
