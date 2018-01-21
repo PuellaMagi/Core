@@ -191,7 +191,7 @@ public void OnClientPutInServer(int client)
 
     if(!g_bAuthLoaded[client] || g_iUserId[client] <= 0)
     {
-        CreateTimer(1.0, Timer_Waiting, client);
+        CreateTimer(1.0, Timer_Waiting, client, TIMER_FLAG_NO_MAPCHANGE);
         return;
     }
 
@@ -285,7 +285,7 @@ public void OnClientAuthorized(int client, const char[] auth)
     if(!GetClientAuthId(client, AuthId_SteamID64, steamid, 32, true))
     {
         MG_Core_LogMessage("User", "OnClientAuthorized", "Error: We can not verify client`s SteamId64 -> \"%L\"", client);
-        CreateTimer(0.1, Timer_ReAuthorize, client, TIMER_REPEAT);
+        CreateTimer(0.1, Timer_ReAuthorize, client, TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
         return;
     }
 
@@ -319,7 +319,7 @@ void LoadClientAuth(int client, const char[] steamid)
     if(!MG_MySQL_IsConnected())
     {
         MG_Core_LogError("User", "LoadClientAuth", "Error: SQL is unavailable -> \"%L\"", client);
-        CreateTimer(5.0, Timer_ReAuthorize, client);
+        CreateTimer(5.0, Timer_ReAuthorize, client, TIMER_FLAG_NO_MAPCHANGE);
         return;
     }
 
@@ -338,7 +338,7 @@ void CheckClientBanStats(int client, const char[] steamid)
     if(!MG_MySQL_IsConnected())
     {
         MG_Core_LogError("User", "LoadClientAuth", "Error: SQL is unavailable -> \"%L\"", client);
-        CreateTimer(5.0, Timer_ReAuthorize, client);
+        CreateTimer(5.0, Timer_ReAuthorize, client, TIMER_FLAG_NO_MAPCHANGE);
         return;
     }
 
@@ -358,7 +358,7 @@ public void LoadClientCallback(Database db, DBResultSet results, const char[] er
     if(results == null || error[0])
     {
         MG_Core_LogError("User", "LoadClientCallback", "SQL Error:  %s -> \"%L\"", error, client);
-        CreateTimer(5.0, Timer_ReAuthorize, client);
+        CreateTimer(5.0, Timer_ReAuthorize, client, TIMER_FLAG_NO_MAPCHANGE);
         return;
     }
     
@@ -452,13 +452,13 @@ public void InserUserCallback(Database db, DBResultSet results, const char[] err
     if(results == null || error[0])
     {
         MG_Core_LogError("User", "CheckBanCallback", "SQL Error:  %s -> \"%L\"", error, client);
-        CreateTimer(5.0, Timer_ReAuthorize, client);
+        CreateTimer(5.0, Timer_ReAuthorize, client, TIMER_FLAG_NO_MAPCHANGE);
         return;
     }
 
     // Refresh client
     OnClientConnected(client);
-    CreateTimer(1.0, Timer_ReAuthorize, client);
+    CreateTimer(1.0, Timer_ReAuthorize, client, TIMER_FLAG_NO_MAPCHANGE);
 }
 
 public void CheckBanCallback(Database db, DBResultSet results, const char[] error, int userid)
@@ -470,7 +470,7 @@ public void CheckBanCallback(Database db, DBResultSet results, const char[] erro
     if(results == null || error[0])
     {
         MG_Core_LogError("User", "CheckBanCallback", "SQL Error:  %s -> \"%L\"", error, client);
-        CreateTimer(5.0, Timer_ReAuthorize, client);
+        CreateTimer(5.0, Timer_ReAuthorize, client, TIMER_FLAG_NO_MAPCHANGE);
         return;
     }
     
