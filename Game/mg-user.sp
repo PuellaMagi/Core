@@ -150,7 +150,7 @@ public void OnPluginStart()
     AddCommandListener(Command_Who, "sm_who");
 
     // global forwards
-    g_hOnUMChecked = CreateGlobalForward("OnClientAuthCheck", ET_Ignore, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell);
+    g_hOnUMChecked = CreateGlobalForward("OnClientAuthChecked", ET_Ignore, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell);
 
     // init console
     g_iUserId[0] = 0;
@@ -235,8 +235,11 @@ public Action Timer_PrintConsole(Handle timer, int client)
 public void OnClientAuthorized(int client, const char[] auth)
 {
     if(strcmp(auth, "BOT") == 0 || IsFakeClient(client) || IsClientSourceTV(client))
+    {
+        CallForward(client);
         return;
-    
+    }
+
     char steamid[32];
     if(!GetClientAuthId(client, AuthId_SteamID64, steamid, 32, true))
     {
@@ -278,7 +281,7 @@ void LoadClientAuth(int client, const char[] steamid)
         CreateTimer(5.0, Timer_ReAuthorize, client);
         return;
     }
-    
+
     Database db = MG_MySQL_GetDatabase();
     
     char m_szQuery[256];

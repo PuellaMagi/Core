@@ -31,7 +31,7 @@ enum Authentication
 }
 
 
-forward void OnClientAuthCheck(int client, bool Spt, bool Vip, bool Ctb, bool Opt, bool Adm, bool Own);
+forward void OnClientAuthChecked(int client, bool Spt, bool Vip, bool Ctb, bool Opt, bool Adm, bool Own);
 native bool MG_UM_IsAuthorized(int client, Authentication auth);
 native void MG_UM_BanClient(int admin,  int target, int banType, int banLength, const char[] banReason);
 native void MG_UM_BanIdentity(int admin, const char[] steamIdentity, int banType, int banLength, const char[] banReason);
