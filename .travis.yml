@@ -1,0 +1,14 @@
+addons:
+  apt_packages:
+    - lib32z1
+    - lib32stdc++6
+    - lftp
+
+language: c
+
+env:
+  - SOURCEMOD=1.8
+  - SOURCEMOD=1.9
+
+script:
+    - 'if [[ $TRAVIS_PULL_REQUEST == "false" ]]; then bash travis/build.sh $SOURCEMOD; else bash travis/test.sh $SOURCEMOD; fi'
