@@ -39,6 +39,7 @@ forward void MG_Core_OnAvailable(int serverId, int modId);
 native void MG_Core_LogError(const char[] module = "Global", const char[] func = "Invalid Function", const char[] msg, any ...);
 native void MG_Core_LogMessage(const char[] module = "Global", const char[] func = "Invalid Function", const char[] msg, any ...);
 native int  MG_Core_GetServerId();
+native int  MG_Core_GetServerModId();
 
 // database
 native bool MG_MySQL_IsConnected();

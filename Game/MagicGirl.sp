@@ -65,7 +65,8 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
     CreateNative("MG_MySQL_ExecDatabase", Native_ExecDatabase);
     
     // core
-    CreateNative("MG_Core_GetServerId", Native_GetServerId);
+    CreateNative("MG_Core_GetServerId",    Native_GetServerId);
+    CreateNative("MG_Core_GetServerModId", Native_GetServerModId);
     
     // logs
     CreateNative("MG_Core_LogError",   Native_LogError);
@@ -153,6 +154,11 @@ public int Native_ExecDatabase(Handle plugin, int numParams)
 public int Native_GetServerId(Handle plugin, int numParams)
 {
     return g_iServerId;
+}
+
+public int Native_GetServerModId(Handle plugin, int numParams)
+{
+    return g_iServerModId;
 }
 
 public int Native_LogError(Handle plugin, int numParams)
