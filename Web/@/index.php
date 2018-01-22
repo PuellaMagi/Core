@@ -353,7 +353,7 @@ foreach($server as $srv)
                         </div>
                     </div>
                     <div class="well" style="text-align: center">
-                        <p>With &hearts; by <a href="https://steamcommunity.com/id/Kxnrl/">Kyle</a> and <a href="https://steamcommunity.com/id/27240DLE/">JH(2724)</a>.</p>
+                        <p>Made by <a href="https://github.com/PuellaMagi">PuellaMagi</a>.</p>
                         <?php 
                             if($cacheleft <= 0){
                                 echo '<p>This page updated on <span class="text-primary"> a few seconds ago</span>.</p>';
