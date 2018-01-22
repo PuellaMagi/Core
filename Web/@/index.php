@@ -78,7 +78,6 @@ if(count($global) < 1 || count($server) < 1) {
         //get server
         $res = $rds->query("SELECT * FROM `dxg_servers` ORDER BY sid");
         $queries++;
-        print_r("Query Error: ". $rds->error);
         while($row = $res->fetch_array())
         {
             $dat = array();
@@ -183,6 +182,7 @@ foreach($server as $srv)
             <data-uib-accordion data-close-others="true" class="bootstrap-css">
                 
                 <div class="content">
+                    <div class="page-header"></div>
                     <div class="panel panel-info">
                         <div class="panel-heading">
                             <h3 class="panel-title">公告板</h3>
@@ -354,6 +354,7 @@ foreach($server as $srv)
                     </div>
                     <div class="well" style="text-align: center">
                         <p>Made by <a href="https://github.com/PuellaMagi">PuellaMagi</a>.</p>
+                        <p>Destroyed by <a href="https://steamcommunity.com/profiles/76561198293577472">天然呆</a>.</p>
                         <?php 
                             if($cacheleft <= 0){
                                 echo '<p>This page updated on <span class="text-primary"> a few seconds ago</span>.</p>';
