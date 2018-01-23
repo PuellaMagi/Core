@@ -151,48 +151,48 @@ void ShowMOTDPanelEx(int client, bool show = true)
 
 void BuildSetupResolutionMenu(int client, const char[] url)
 {
-	Menu menu = CreateMenu(MenuHandler_RP);
-	menu.SetTitle("选择你的游戏分辨率\n如果没有则选择接近数值(向下取值)\n分辨率过大将无法正常关闭窗口\n ");
+    Menu menu = CreateMenu(MenuHandler_RP);
+    menu.SetTitle("选择你的游戏分辨率\n如果没有则选择接近数值(向下取值)\n分辨率过大将无法正常关闭窗口\n ");
 
-	menu.AddItem("1920*1080", "1920*1080");
-	menu.AddItem("1280*1024", "1280*1024");
-	menu.AddItem("1600*900", "1600*900");
-	menu.AddItem("1366*768", "1366*768");
-	menu.AddItem("1280*720", "1280*720");
-	menu.AddItem("1280*960", "1280*960");
+    menu.AddItem("1920*1080", "1920*1080");
+    menu.AddItem("1280*1024", "1280*1024");
+    menu.AddItem("1600*900", "1600*900");
+    menu.AddItem("1366*768", "1366*768");
+    menu.AddItem("1280*720", "1280*720");
+    menu.AddItem("1280*960", "1280*960");
     menu.AddItem(url, url, ITEMDRAW_IGNORE);
 
-	menu.ExitButton = false;
-	menu.Display(client, 0);
+    menu.ExitButton = false;
+    menu.Display(client, 0);
 }
 
 public int MenuHandler_RP(Menu menu, MenuAction action, int client, int itemNum) 
 {
-	if(action == MenuAction_Select) 
-	{
-		char info[32];
-		menu.GetItem(itemNum, info, 32);
+    if(action == MenuAction_Select) 
+    {
+        char info[32];
+        menu.GetItem(itemNum, info, 32);
         
         char url[192];
         menu.GetItem(6, url, 192);
 
-		char m_szData[2][16];
-		ExplodeString(info, "*", m_szData, 2, 16);
-		g_Resolution[client][0] = StringToInt(m_szData[0]);
-		g_Resolution[client][1] = StringToInt(m_szData[1]);
+        char m_szData[2][16];
+        ExplodeString(info, "*", m_szData, 2, 16);
+        g_Resolution[client][0] = StringToInt(m_szData[0]);
+        g_Resolution[client][1] = StringToInt(m_szData[1]);
 
-		SetClientCookie(client, g_cRqesolution, info);
+        SetClientCookie(client, g_cRqesolution, info);
 
-		PrintToChat(client, "***\x04MOTD\x01***   你的设置已保存分辨率[\x04%s\x01]", info);
+        PrintToChat(client, "***\x04MOTD\x01***   你的设置已保存分辨率[\x04%s\x01]", info);
 
-		if(strlen(url) > 5)
+        if(strlen(url) > 5)
             UrlToWebInterface(client, g_Resolution[client][0]-12, g_Resolution[client][1]-80, url, true);
-	}
-	else if(action == MenuAction_End)
-	{
-		delete menu;
-	}
-    else if(action == MenuCancel_Interrupted)
+    }
+    else if(action == MenuAction_End)
+    {
+        delete menu;
+    }
+    else if(action == MenuAction_Cancel && itemNum == MenuCancel_Interrupted)
     {
         char url[192];
         menu.GetItem(6, url, 192);
