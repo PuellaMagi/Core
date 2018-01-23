@@ -115,7 +115,7 @@ public int Native_RemoveMotd(Handle plugin, int numParams)
 bool UrlToWebInterface(int client, int width, int height, const char[] url, bool show)
 {
     char m_szQuery[512], m_szEscape[256];
-    MG_MySQL_EscapeString(url, m_szEscape, 256);
+    MG_MySQL_GetDatabase().Escape(url, m_szEscape, 256);
     FormatEx(m_szQuery, 512, "INSERT INTO `dxg_motd` (`uid`, `show`, `width`, `height`, `url`) VALUES (%d, %b, %d, %d, '%s') ON DUPLICATE KEY UPDATE `url` = VALUES(`url`), `show`=%b, `width`=%d, `height`=%d", MG_Users_UserIdentity(client), show, width, height, m_szEscape, show, width, height);
     MG_MySQL_GetDatabase().Query(SQLCallback_WebInterface, m_szQuery, client | (view_as<int>(show) << 7), DBPrio_High);
     return true;

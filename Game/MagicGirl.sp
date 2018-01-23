@@ -108,8 +108,8 @@ public int Native_EscapeString(Handle plugin, int numParams)
     if(GetNativeString(1, input, inLen+1) != SP_ERROR_NONE)
         return false;
     
-    char[] output = new char[inLen * 2];
-    if(!g_hMySQL.Escape(input, output, inLen*2))
+    char[] output = new char[GetNativeCell(3)];
+    if(!g_hMySQL.Escape(input, output, GetNativeCell(3)))
         return false;
     
     return (SetNativeString(2, output, GetNativeCell(3), true) == SP_ERROR_NONE);
