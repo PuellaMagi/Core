@@ -2,7 +2,7 @@
 
 require_once __DIR__ . '/inc/configs.inc.php';
 
-$uid = $_GET['id'];
+$uid = $_GET['uid'];
 
 if($uid == null || !is_numeric($uid))
 {
@@ -17,7 +17,7 @@ if($rds->connect_errno)
 }
 
 $result = $rds->query("SELECT * FROM dxg_motd WHERE uid=$uid");
-$row = $res->fetch_array();
+$row = $result->fetch_array();
 $url = $row['url'];
 $width = $row['width'];
 $height = $row['height'];
@@ -28,7 +28,7 @@ if($url == null)
 	die("系统错误 0x00009427");
 }
 
-$rds->close;
+mysqli_close($rds);
 
 echo '<html><head><title>叁生鉐</title></head><body>';
 
