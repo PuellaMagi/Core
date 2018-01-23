@@ -189,7 +189,7 @@ foreach($server as $srv)
                         </div>
                         <div class="panel-body">
                             <br/>
-                            <p> on building </p>
+                            <p> 希望你们不要忘记那个毁掉CG的人... </p>
                             <br/>
                         </div>
                     </div>
@@ -354,7 +354,6 @@ foreach($server as $srv)
                     </div>
                     <div class="well" style="text-align: center">
                         <p>Made by <a href="https://github.com/PuellaMagi">PuellaMagi</a>.</p>
-                        <p>Destroyed by <a href="https://steamcommunity.com/profiles/76561198293577472">天然呆</a>.</p>
                         <?php 
                             if($cacheleft <= 0){
                                 echo '<p>This page updated on <span class="text-primary"> a few seconds ago</span>.</p>';
