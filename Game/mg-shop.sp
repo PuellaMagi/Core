@@ -1,6 +1,6 @@
 /******************************************************************/
 /*                                                                */
-/*                  MagicGirl.NET User Manager                    */
+/*                  MagicGirl.NET Shop System                     */
 /*                                                                */
 /*                                                                */
 /*  File:          mg-shop.sp                                     */
@@ -8,7 +8,7 @@
 /*                                                                */
 /*                                                                */
 /*  Copyright (C) 2018  MagicGirl.NET Dev Team                    */
-/*  2017/01/55 17:17:52                                           */
+/*  2017/01/22 17:17:52                                           */
 /*                                                                */
 /*  This code is licensed under the Apache License.               */
 /*                                                                */
