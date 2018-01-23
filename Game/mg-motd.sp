@@ -202,8 +202,8 @@ public int MenuHandler_RP(Menu menu, MenuAction action, int client, int itemNum)
 
 public void OnPluginStart()
 {
-	RegConsoleCmd("sm_setrp", Command_SetRP);
-	g_cRqesolution = RegClientCookie("motd_extended_rp", "resolution of motd window", CookieAccess_Protected);
+    RegConsoleCmd("sm_setrp", Command_SetRP);
+    g_cRqesolution = RegClientCookie("motd_extended_rp", "resolution of motd window", CookieAccess_Protected);
 }
 
 public void OnClientCookiesCached(int client)
@@ -211,15 +211,15 @@ public void OnClientCookiesCached(int client)
     g_Resolution[client][0] = 0;
     g_Resolution[client][1] = 0;
     
-	char buffer[16];
-	GetClientCookie(client, g_cRqesolution, buffer, 16);
-	if(strlen(buffer) > 0)
-	{
-		char m_szData[2][16];
-		ExplodeString(buffer, "*", m_szData, 2, 16);
-		g_Resolution[client][0] = StringToInt(m_szData[0]);
-		g_Resolution[client][1] = StringToInt(m_szData[1]);
-	}
+    char buffer[16];
+    GetClientCookie(client, g_cRqesolution, buffer, 16);
+    if(strlen(buffer) > 0)
+    {
+        char m_szData[2][16];
+        ExplodeString(buffer, "*", m_szData, 2, 16);
+        g_Resolution[client][0] = StringToInt(m_szData[0]);
+        g_Resolution[client][1] = StringToInt(m_szData[1]);
+    }
 }
 
 public Action Command_SetRP(int client, int args)
