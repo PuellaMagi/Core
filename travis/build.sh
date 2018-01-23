@@ -36,3 +36,4 @@ cp -rf Game/* addons/sourcemod/scripting
 addons/sourcemod/scripting/spcomp -E -v0 addons/sourcemod/scripting/MagicGirl.sp
 addons/sourcemod/scripting/spcomp -E -v0 addons/sourcemod/scripting/mg-stats.sp
 addons/sourcemod/scripting/spcomp -E -v0 addons/sourcemod/scripting/mg-user.sp
+addons/sourcemod/scripting/spcomp -E -v0 addons/sourcemod/scripting/mg-motd.sp
