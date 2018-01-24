@@ -189,7 +189,7 @@ foreach($server as $srv)
                         </div>
                         <div class="panel-body">
                             <br/>
-                            <p> 希望你们不要忘记那个毁掉CG的人... </p>
+                            <p> Coming soon... </p>
                             <br/>
                         </div>
                     </div>
