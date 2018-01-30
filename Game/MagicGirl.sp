@@ -267,12 +267,12 @@ public Action Timer_Reconnect(Handle timer, int retry)
 
 public void NativeSave_Callback(Database db, DBResultSet results, const char[] error, DataPack pack)
 {
-    if(results == null || error[0])
+    if(results == null || error[0] || results.AffectedRows == 0)
     {
         char m_szQueryString[2048];
         pack.Reset();
         pack.ReadString(m_szQueryString, 2048);
-        MG_Core_LogError("MySQL", "NativeSave_Callback", "SQL Error: %s\nQuery: %s", error, m_szQueryString);
+        MG_Core_LogError("MySQL", "NativeSave_Callback", "SQL Error: %s\nQuery: %s", (results == null || error[0]) ? error : "No affected row", m_szQueryString);
     }
 
     delete pack;
