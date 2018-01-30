@@ -223,8 +223,8 @@ public void LoadClientCallback(Database db, DBResultSet results, const char[] er
     char map[128];
     GetCurrentMap(map, 128);
     
-    char m_szQuery[128];
-    FormatEx(m_szQuery, 128, "INSERT INTO dxg_analytics VALUES (DEFAULT, %d, %d, '%s', '%s', %d, %d, -1);", MG_Users_UserIdentity(client), MG_Core_GetServerId(), ip, map, GetTime(), g_iToday);
+    char m_szQuery[256];
+    FormatEx(m_szQuery, 256, "INSERT INTO dxg_analytics VALUES (DEFAULT, %d, %d, '%s', '%s', %d, %d, -1);", MG_Users_UserIdentity(client), MG_Core_GetServerId(), ip, map, GetTime(), g_iToday);
     MG_MySQL_GetDatabase().Query(InserAnalyticsCallback, m_szQuery, GetClientUserId(client));
 }
 
