@@ -76,6 +76,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
     RegPluginLibrary("MagicGirl");
 
     /* Init plugin */
+    GameRules_SetProp("m_bIsValveDS", 1, 0, 0, true);
     SetConVarInt(FindConVar("sv_hibernate_when_empty"), 0);
     g_Engine = GetEngineVersion();
     int ip = GetConVarInt(FindConVar("hostip"));
