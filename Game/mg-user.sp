@@ -329,7 +329,7 @@ void LoadClientAuth(int client, const char[] steamid)
     Database db = MG_MySQL_GetDatabase();
     
     char m_szQuery[256];
-    FormatEx(m_szQuery, 256, "SELECT id, username, imm, spt, vip, ctb, opt, adm, own FROM dxg_users WHERE steamid = '%s'", steamid);
+    FormatEx(m_szQuery, 256, "SELECT uid, username, imm, spt, vip, ctb, opt, adm, own FROM dxg_users WHERE steamid = '%s'", steamid);
     db.Query(LoadClientCallback, m_szQuery, GetClientUserId(client));
 }
 
@@ -667,27 +667,3 @@ stock int CharToNumber(const int cNum)
 {
     return (cNum >= '0' && cNum <= '9') ? (cNum - '0') : 0;
 }
-
-/* 
-    SQL String 
-
-CREATE TABLE `dxg_users` (
-  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-  `steamid` bigint(20) unsigned NOT NULL DEFAULT '0',
-  `username` varchar(32) NOT NULL DEFAULT 'unnamed',
-  `imm` tinyint(3) unsigned NOT NULL DEFAULT '0' COMMENT 'AdminImmunityLevel',
-  `spt` tinyint(2) unsigned NOT NULL DEFAULT '0',
-  `vip` tinyint(2) unsigned NOT NULL DEFAULT '0',
-  `ctb` tinyint(2) unsigned NOT NULL DEFAULT '0',
-  `opt` tinyint(2) unsigned NOT NULL DEFAULT '0',
-  `adm` tinyint(2) unsigned NOT NULL DEFAULT '0',
-  `own` tinyint(2) unsigned NOT NULL DEFAULT '0',
-  `money` bigint(20) unsigned NOT NULL DEFAULT '0',
-  `firstjoin` int(11) unsigned NOT NULL DEFAULT '0',
-  `lastseen` int(11) unsigned NOT NULL DEFAULT '0',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `steam_unique` (`steamid`),
-  UNIQUE KEY `bind_unique` (`id`,`steamid`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
-
-*/

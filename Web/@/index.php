@@ -45,7 +45,7 @@ if(count($global) < 1 || count($server) < 1) {
     if(!$rds->connect_errno){
 
         //get active connect time
-        $res = $rds->query("SELECT COUNT(id) AS active FROM `dxg_users` WHERE lastseen > UNIX_TIMESTAMP()-7776000");
+        $res = $rds->query("SELECT COUNT(uid) AS active FROM `dxg_users` WHERE lastseen > UNIX_TIMESTAMP()-7776000");
         $queries++;
         $row = $res->fetch_array();
         $global['active'] = $row['active'];
@@ -64,13 +64,13 @@ if(count($global) < 1 || count($server) < 1) {
         
         //get new players
         $thismonth = strtotime(date("Y-m"));
-        $res = $rds->query("SELECT Count(id) as newbee FROM `dxg_users` WHERE firstjoin >= $thismonth");
+        $res = $rds->query("SELECT Count(uid) as newbee FROM `dxg_users` WHERE firstjoin >= $thismonth");
         $queries++;
         $row = $res->fetch_array();
         $global['newbee'] = $row['newbee'];
 
         //get total players
-        $res = $rds->query("SELECT Count(*) as players FROM `dxg_users`");
+        $res = $rds->query("SELECT Count(uid) as players FROM `dxg_users`");
         $queries++;
         $row = $res->fetch_array();
         $global['players'] = $row['players'];
@@ -189,7 +189,8 @@ foreach($server as $srv)
                         </div>
                         <div class="panel-body">
                             <br/>
-                            <p> Coming soon... </p>
+                            <p> 如果你想申请开一个属于你自己的CSGO/INS社区服务器. </p>
+                            <p> 编辑你的想法发送到邮箱  30486416[AT]qq[DOT]com .</p>
                             <br/>
                         </div>
                     </div>
