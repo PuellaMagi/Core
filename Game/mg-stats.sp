@@ -21,11 +21,8 @@
 #include <MagicGirl/user>
 #include <MagicGirl/stats>
 
-#define PI_NAME THIS_PRETAG ... " - Stats"
-#define PI_AUTH THIS_AUTHOR
+#define PI_NAME THIS_PRETAG ... " - Stats
 #define PI_DESC "User Stats for MagicGirl.NET"
-#define PI_VERS Core_Version ... " " ... APIs_Version ... " " ... "<commit-count>"
-#define PI_URLS THIS_URLINK
 
 #define TEAM_OB 1
 #define TEAM_TE 2

@@ -2,6 +2,7 @@ addons:
   apt_packages:
     - lib32z1
     - lib32stdc++6
+    - p7zip-full
     - lftp
 
 language: c
@@ -11,4 +12,4 @@ env:
   - SOURCEMOD=1.9
 
 script:
-    - 'if [[ $TRAVIS_PULL_REQUEST == "false" ]]; then bash travis/build.sh $SOURCEMOD; else bash travis/test.sh $SOURCEMOD; fi'
+    - 'if [[ $TRAVIS_PULL_REQUEST == "false" ]]; then bash travis/build.sh $SOURCEMOD $FTP_HOST $FTP_USER $FTP_PSWD ${TRAVIS_COMMIT::7}; else bash travis/test.sh $SOURCEMOD; fi'

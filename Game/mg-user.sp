@@ -21,10 +21,7 @@
 #include <MagicGirl/user>
 
 #define PI_NAME THIS_PRETAG ... " - User Manager"
-#define PI_AUTH THIS_AUTHOR
 #define PI_DESC "User Manager for MagicGirl.NET"
-#define PI_VERS Core_Version ... " " ... APIs_Version ... " " ... "<commit-count>"
-#define PI_URLS THIS_URLINK
 
 public Plugin myinfo = 
 {
@@ -408,6 +405,7 @@ public void LoadClientCallback(Database db, DBResultSet results, const char[] er
         {
             _admin.SetFlag(Admin_Ban, true);
             _admin.SetFlag(Admin_Unban, true);
+
             if(g_authClient[client][Adm] || g_authClient[client][Own])
             {
                 _admin.SetFlag(Admin_Convars, true);

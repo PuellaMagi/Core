@@ -23,10 +23,7 @@
 #include <clientprefs>
 
 #define PI_NAME THIS_PRETAG ... " - Motd"
-#define PI_AUTH THIS_AUTHOR
 #define PI_DESC "MOTD Extended for MagicGirl.NET"
-#define PI_VERS Core_Version ... " " ... APIs_Version ... " " ... "<commit-count>"
-#define PI_URLS THIS_URLINK
 
 public Plugin myinfo = 
 {

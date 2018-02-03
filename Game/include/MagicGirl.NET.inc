@@ -15,12 +15,11 @@
 /******************************************************************/
 
 
-#define THIS_AUTHOR "MagicGirl.NET Dev Team" // Kyle 'Kxnrl' Lu and Magic '2724' Jiang
-#define THIS_PRETAG "MagicGirl.NET"
-#define THIS_URLINK "https://MagicGirl.net"
+#define PI_AUTH "MagicGirl.NET Dev Team" // Kyle 'Kxnrl' Lu and Magic '2724' Jiang
+#define PI_VERS "Api-v1.0 Core-v1.0 Plugin-v<commit-count>"
+#define PI_URLS "https://MagicGirl.net"
 
-#define Core_Version "c1.0"
-#define APIs_Version "a1.0"
+#define THIS_PRETAG "MagicGirl.NET"
 
 #if !defined REQUIRE_PLUGIN
     #endinput
