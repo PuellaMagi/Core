@@ -21,7 +21,7 @@
 #include <MagicGirl/user>
 #include <MagicGirl/stats>
 
-#define PI_NAME THIS_PRETAG ... " - Stats
+#define PI_NAME THIS_PRETAG ... " - Stats"
 #define PI_DESC "User Stats for MagicGirl.NET"
 
 #define TEAM_OB 1

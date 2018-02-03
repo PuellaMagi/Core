@@ -20,6 +20,9 @@
 
 #include <MagicGirl.NET>
 
+// game rules.
+#include <sdktools_gamerules>
+
 #define PI_NAME THIS_PRETAG ... " - Core"
 #define PI_DESC "provides an API of MagicGirl.NET"
 
