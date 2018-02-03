@@ -204,9 +204,6 @@ public void OnPluginStart()
     
     // log dir
     CheckLogsDirectory();
-    
-    // fake offical server
-    GameRules_SetProp("m_bIsValveDS", 1, 0, 0, true);
 }
 
 public void CheckLogsDirectory()
@@ -405,4 +402,10 @@ void GenerateRandomString(char[] buffer, int maxLen)
     }
 
     buffer[maxLen] = '\0';
+}
+
+public void OnMapStart()
+{
+    // fake offical server
+    GameRules_SetProp("m_bIsValveDS", 1, 0, 0, true);
 }
