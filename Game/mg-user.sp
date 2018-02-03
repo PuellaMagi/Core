@@ -402,22 +402,21 @@ public void LoadClientCallback(Database db, DBResultSet results, const char[] er
         _admin.SetFlag(Admin_Slay, true);
         _admin.SetFlag(Admin_Chat, true);
         _admin.SetFlag(Admin_Vote, true);
+        _admin.SetFlag(Admin_Changemap, true);
 
         if(g_authClient[client][Opt] || g_authClient[client][Adm] || g_authClient[client][Own])
         {
             _admin.SetFlag(Admin_Ban, true);
             _admin.SetFlag(Admin_Unban, true);
-            _admin.SetFlag(Admin_Changemap, true);
-            
             if(g_authClient[client][Adm] || g_authClient[client][Own])
             {
                 _admin.SetFlag(Admin_Convars, true);
                 _admin.SetFlag(Admin_Config, true);
-                _admin.SetFlag(Admin_Password, true);
-                _admin.SetFlag(Admin_Cheats, true);
-                
+
                 if(g_authClient[client][Own])
                 {
+                    _admin.SetFlag(Admin_Password, true);
+                    _admin.SetFlag(Admin_Cheats, true);
                     _admin.SetFlag(Admin_RCON, true);
                     _admin.SetFlag(Admin_Root, true);
                 }
