@@ -231,5 +231,5 @@ public Action Command_SetRP(int client, int args)
 
 bool IsValidClient(int client)
 {
-    return (1 <= client <= MaxClients && IsClientInGame(client) && !IsFakeClient(client) || !IsClientSourceTV(client));
+    return (1 <= client <= MaxClients && IsClientInGame(client) && !IsFakeClient(client) && !IsClientSourceTV(client));
 }
