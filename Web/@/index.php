@@ -100,6 +100,7 @@ $total = 0;
 $query = array();
 $global['current'] = 0;
 $retry = 0;
+$srcds = 0;
 
 foreach($server as $srv)
 {
@@ -126,6 +127,7 @@ foreach($server as $srv)
                 break;
 
             $serverInfo = QuerySRCDSInfo($addr);
+            $srcds++;
         }
 
         if($serverInfo === null){
@@ -380,7 +382,7 @@ foreach($server as $srv)
                                 echo '<p>This page cached on <span class="text-primary">' . date("Y.m.d H:i:s", $cacheleft) . '</span>.</p>';
                             }
                         ?>
-                        <p><span id="debuginfo">Processed in <?php $Processed += microtime(true); echo (Round($Processed, 6)); ?> second(s), <?php echo $queries; ?> queries, Gzip On, Redis <?php echo ($cache ? "On" : "Off"); ?>.</span></p>
+                        <p><span id="debuginfo">Processed in <?php $Processed += microtime(true); echo (Round($Processed, 6)); ?> s, <?php echo $queries; ?> DBQ(s), <?php echo $srcds; ?> SEQ(s), Gzip On, Redis <?php echo ($cache ? "On" : "Off"); ?>.</span></p>
                     </div>
                 </div>
             </data-uib-accordion>
