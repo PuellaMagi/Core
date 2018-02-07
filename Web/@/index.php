@@ -76,7 +76,7 @@ if(count($global) < 1 || count($server) < 1) {
         $global['players'] = $row['players'];
 
         //get server
-        $res = $rds->query("SELECT * FROM `dxg_servers` ORDER BY sid");
+        $res = $rds->query("SELECT * FROM `dxg_servers` WHERE ip not like '127.0.0.1' ORDER BY sid");
         $queries++;
         while($row = $res->fetch_array())
         {
@@ -99,6 +99,7 @@ if(count($global) < 1 || count($server) < 1) {
 $total = 0;
 $query = array();
 $global['current'] = 0;
+$retry = 0;
 
 foreach($server as $srv)
 {
@@ -113,11 +114,24 @@ foreach($server as $srv)
     if(count($serverInfo) < 1){
 
         $load = false;
-        $serverInfo = QuerySRCDSInfo($addr);
-        if($serverInfo === null){
+        $serverInfo = null;
+        
+        while($serverInfo === null)
+        {
+            $retry++;
+            
+            if($retry > 1)
+                usleep(150000);
+            else if($retry > 3)
+                break;
 
+            $serverInfo = QuerySRCDSInfo($addr);
+        }
+
+        if($serverInfo === null){
             $serverInfo['Error'] = true;
             $serverInfo['HostName'] = $srv['ne']."(" . $addr . ")查询失败...";
+            usleep(100000);
         }
     }
     
@@ -146,7 +160,9 @@ foreach($server as $srv)
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <style>main{margin-top:30px;}</style>
+        <link rel="icon" href="image/icon.ico" type="image/x-icon" />
+		<link rel="shortcut icon" href="image/icon.ico" type="image/x-icon" />
+		<link rel="apple-touch-icon-precomposed" href="image/logo.png" />
         <link href="css/bootsteam.min.css" rel="stylesheet" />
         <link href="css/sb-admin-2.min.css" rel="stylesheet" />
         <link href="css/font-awesome.min.css" rel="stylesheet" />
@@ -154,6 +170,7 @@ foreach($server as $srv)
         <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.4.0/angular-animate.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/1.3.3/ui-bootstrap-tpls.min.js"></script>
         <script src="js/main.js"></script>-->
+        <style>main{margin-top:30px;}</style>
     </head>
     <body data-ng-controller="demoController as vm" style="background: url('image/background.png'); background-repeat: repeat-xy; background-attachment: fixed; width:100%; height:100%;">
 
@@ -167,12 +184,12 @@ foreach($server as $srv)
                         <span class="icon-bar"></span>
                     </button>
                     <a class="navbar-brand" href="/">
-                        <span><!--<img src="image/logo.png" width="32" height="32">--> 魔法少女 </span>
+                        <span><img src="image/logo.png" width="32" height="32"> PuellaMagi </span>
                     </a>
                 </div>
                 <div class="collapse navbar-collapse" data-uib-collapse="!isCollapsed1">
                     <ul class="nav navbar-nav navbar-left">
-                        <li><a href="#"><font size="3">Dashboard</a></font></li>
+                        <li><a href="#"><font size="3">首页</a></font></li>
                     </ul>
                 </div>
             </div>
