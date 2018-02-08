@@ -345,7 +345,7 @@ void CheckClientBanStats(int client, const char[] steamid)
     Database db = MG_MySQL_GetDatabase();
 
     char m_szQuery[256];
-    FormatEx(m_szQuery, 256, "SELECT bType, bSrv, bSrvMod, bCreated, bLength, bReason FROM dxg_bans WHERE steamid = '%s' AND bRemovedBy = -1", steamid);
+    FormatEx(m_szQuery, 256, "SELECT bType, bSrv, bSrvMod, bCreated, bLength, bReason, id FROM dxg_bans WHERE steamid = '%s' AND bRemovedBy = -1", steamid);
     db.Query(CheckBanCallback, m_szQuery, GetClientUserId(client));
 }
 
@@ -481,7 +481,7 @@ public void CheckBanCallback(Database db, DBResultSet results, const char[] erro
 
     while(results.FetchRow())
     {
-        //bType, bSrv, bSrvMod, bCreated, bLength, bReason 
+        //bType, bSrv, bSrvMod, bCreated, bLength, bReason, id
 
         char bReason[32];
         int bType    = results.FetchInt(0);
@@ -500,6 +500,13 @@ public void CheckBanCallback(Database db, DBResultSet results, const char[] erro
         // if mod ban and current server mod != ban mod id
         if(bType == 1 && MG_Core_GetServerModId() != bSrvMod)
             continue;
+        
+        char ip[32];
+        GetClientIP(client, ip, 32);
+        
+        char m_szQuery[256];
+        FormatEx(m_szQuery, 256, "INSERT INTO dxg_blocks VALUES (DEFAULT, %d, '%s', %d)", results.FetchInt(6), ip, GetTime());
+        MG_MySQL_SaveDatabase(m_szQuery);
 
         char timeExpired[64];
         if(bLength != 0)
