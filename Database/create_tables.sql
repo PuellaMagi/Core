@@ -93,3 +93,33 @@ CREATE TABLE `dxg_vars` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `k` (`key`)
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8;
+
+CREATE TABLE `dxg_mapupdate` (
+  `Id` int(11) NOT NULL AUTO_INCREMENT,
+  `sid` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `done` bit(1) NOT NULL DEFAULT b'0',
+  `map` varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `try` tinyint(3) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`Id`),
+  UNIQUE KEY `unique` (`sid`,`map`)
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `dxg_maprequest` (
+  `Id` int(11) NOT NULL AUTO_INCREMENT,
+  `uid` int(11) unsigned NOT NULL DEFAULT '0',
+  `steamid` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'STEAM_ID_INVALID',
+  `type` varchar(4) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'no',
+  `map` varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'MAP_NAME_INVALID',
+  `url` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'URL_INVALID',
+  `time` int(11) unsigned NOT NULL DEFAULT '0',
+  `done` bit(1) NOT NULL DEFAULT b'0',
+  `try` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  PRIMARY KEY (`Id`)
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `dxg_mapdb` (
+  `mod` int(11) NOT NULL DEFAULT '100',
+  `map` varchar(128) NOT NULL DEFAULT 'no',
+  `md5` varchar(128) DEFAULT NULL,
+  PRIMARY KEY (`map`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
