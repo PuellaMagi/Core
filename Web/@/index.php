@@ -26,6 +26,11 @@ $lockfile = __DIR__ . '/inc/query.lock';
 while(file_exists($lockfile))
 {
     usleep(1000000);
+    if(filemtime($lockfile) + 300 > time())
+    {
+        unlink($lockfile);
+        break;
+    }
 }
 
 if($redis->connect($_config['redis']['host'], $_config['redis']['port'], 1, NULL, 200)) {
@@ -396,5 +401,6 @@ foreach($server as $srv)
     </body>
 </html>
 <?php 
-unlink($lockfile);
+if(file_exists($lockfile))
+    unlink($lockfile);
 ?>
