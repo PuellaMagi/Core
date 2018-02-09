@@ -406,6 +406,10 @@ void GenerateRandomString(char[] buffer, int maxLen)
 
 public void OnMapStart()
 {
+    // only use in csgo.
+    if(g_Engine != Engine_CSGO)
+        return;
+
     // fake offical server
     GameRules_SetProp("m_bIsValveDS", 1, 0, 0, true);
 }
