@@ -34,6 +34,7 @@ addons/sourcemod/scripting/spcomp -E -v0 addons/sourcemod/scripting/MagicGirl.sp
 addons/sourcemod/scripting/spcomp -E -v0 addons/sourcemod/scripting/mg-stats.sp -o"build/Game/plugins/mg-stats.smx"
 addons/sourcemod/scripting/spcomp -E -v0 addons/sourcemod/scripting/mg-user.sp -o"build/Game/plugins/mg-user.smx"
 addons/sourcemod/scripting/spcomp -E -v0 addons/sourcemod/scripting/mg-motd.sp -o"build/Game/plugins/mg-motd.smx"
+addons/sourcemod/scripting/spcomp -E -v0 addons/sourcemod/scripting/mg-vars.sp -o"build/Game/plugins/mg-vars.smx"
 
 mv Web/* build/Website
 mv Game/* build/Game/scripts
@@ -51,3 +52,4 @@ lftp -c "open -u $FTP_USER,$FTP_PSWD $FTP_HOST; put -O /PuellaMagi/Raw/ MagicGir
 lftp -c "open -u $FTP_USER,$FTP_PSWD $FTP_HOST; put -O /PuellaMagi/Raw/ mg-stats.smx"
 lftp -c "open -u $FTP_USER,$FTP_PSWD $FTP_HOST; put -O /PuellaMagi/Raw/ mg-user.smx"
 lftp -c "open -u $FTP_USER,$FTP_PSWD $FTP_HOST; put -O /PuellaMagi/Raw/ mg-motd.smx"
+lftp -c "open -u $FTP_USER,$FTP_PSWD $FTP_HOST; put -O /PuellaMagi/Raw/ mg-vars.smx"
