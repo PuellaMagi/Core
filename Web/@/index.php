@@ -23,14 +23,12 @@ $srcdsi = array();
 
 ini_set('max_execution_time', 60);
 $lockfile = __DIR__ . '/inc/query.lock';
+if(file_exists($lockfile) && filemtime($lockfile) + 300 > time())
+    unlink($lockfile);
+
 while(file_exists($lockfile))
 {
     usleep(1000000);
-    if(filemtime($lockfile) + 300 > time())
-    {
-        unlink($lockfile);
-        break;
-    }
 }
 
 if($redis->connect($_config['redis']['host'], $_config['redis']['port'], 1, NULL, 200)) {
