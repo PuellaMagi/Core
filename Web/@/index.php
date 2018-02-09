@@ -21,6 +21,12 @@ $global = array();
 $server = array();
 $srcdsi = array();
 
+ini_set('max_execution_time', 60);
+$lockfile = __DIR__ . '/inc/query.lock';
+while(file_exists($lockfile))
+{
+    usleep(1000000);
+}
 
 if($redis->connect($_config['redis']['host'], $_config['redis']['port'], 1, NULL, 200)) {
 
@@ -99,7 +105,6 @@ if(count($global) < 1 || count($server) < 1) {
 $total = 0;
 $query = array();
 $global['current'] = 0;
-$retry = 0;
 $srcds = 0;
 
 foreach($server as $srv)
@@ -115,28 +120,29 @@ foreach($server as $srv)
     if(count($serverInfo) < 1){
 
         $load = false;
+        $retry = 0;
         $serverInfo = null;
-        
-        while($serverInfo === null)
-        {
-            $retry++;
-            
-            if($retry > 1)
-                usleep(150000);
-            else if($retry > 3)
-                break;
 
+        if(!file_exists($lockfile))
+            file_put_contents($lockfile, "Source Engine Query");
+
+        do
+        {
             $serverInfo = QuerySRCDSInfo($addr);
             $srcds++;
-        }
+            $retry++;
+            
+            if($retry > 3)
+                break;
+
+        } while($serverInfo === null);
 
         if($serverInfo === null){
             $serverInfo['Error'] = true;
             $serverInfo['HostName'] = $srv['ne']."(" . $addr . ")查询失败...";
-            usleep(100000);
         }
     }
-    
+
     $serverInfo['ip'] = $addr;
     $serverInfo['id'] = $srv['id'];
 
@@ -389,3 +395,6 @@ foreach($server as $srv)
         </main>
     </body>
 </html>
+<?php 
+unlink($lockfile);
+?>
