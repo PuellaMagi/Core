@@ -84,3 +84,12 @@ CREATE TABLE `dxg_users` (
   UNIQUE KEY `steam_unique` (`steamid`),
   UNIQUE KEY `bind_unique` (`uid`,`steamid`)
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8;
+
+CREATE TABLE `dxg_vars` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `type` varchar(32) NOT NULL DEFAULT 'var',
+  `key` varchar(32) NOT NULL DEFAULT 'INVALID_KEY',
+  `var` varchar(128) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `k` (`key`)
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8;
