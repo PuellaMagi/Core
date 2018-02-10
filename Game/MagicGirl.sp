@@ -343,10 +343,20 @@ void RetrieveInfoFromKV()
     if(!kv.ImportFromFile(path))
         SetFailState("Connect to database error and kv load failed!");
     
-    g_iServerId = kv.GetNum("ServerId", -1);
-    g_iServerModId = kv.GetNum("ServerModId", -1);
-    kv.GetString("Hostname", g_szHostName, 128, "MagicGirl.NET - Server");
+    g_iServerId = kv.GetNum("serverid", -1);
+    g_iServerModId = kv.GetNum("modid", -1);
+    kv.GetString("hostname", g_szHostName, 128, "MagicGirl.NET - Server");
     
+    if(g_Engine == Engine_CSGO)
+    {
+        // fix host name in gotv
+        ConVar host_name_store = FindConVar("host_name_store");
+        if(host_name_store != null)
+            host_name_store.SetString("1", false, false);
+    }
+
+    SetConVarString(FindConVar("hostname"), g_szHostName, false, false);
+
     delete kv;
     
     if(g_iServerId == -1)
@@ -362,9 +372,9 @@ void SaveInfoToKV()
 {
     KeyValues kv = new KeyValues("MagicGirl.Net");
     
-    kv.SetNum("ServerId", g_iServerId);
-    kv.SetNum("ServerModId", g_iServerModId);
-    kv.SetString("Hostname", g_szHostName);
+    kv.SetNum("serverid", g_iServerId);
+    kv.SetNum("modid", g_iServerModId);
+    kv.SetString("hostname", g_szHostName);
     kv.Rewind();
 
     char path[128];
