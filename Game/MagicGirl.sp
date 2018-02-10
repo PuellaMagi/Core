@@ -406,10 +406,16 @@ void GenerateRandomString(char[] buffer, int maxLen)
 
 public void OnMapStart()
 {
-    // only use in csgo.
-    if(g_Engine != Engine_CSGO)
-        return;
+    if(g_Engine == Engine_CSGO)
+    {
+        // fix host name in gotv
+        ConVar host_name_store = FindConVar("host_name_store");
+        if(host_name_store != null)
+            host_name_store.SetString("1", false, false);
+        
+        // fake offical server
+        GameRules_SetProp("m_bIsValveDS", 1, 0, 0, true);
+    }
 
-    // fake offical server
-    GameRules_SetProp("m_bIsValveDS", 1, 0, 0, true);
+    SetConVarString(FindConVar("hostname"), g_szHostName, false, false);
 }
