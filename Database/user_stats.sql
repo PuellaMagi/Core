@@ -50,4 +50,5 @@ START TRANSACTION;
 
     SELECT dbStep;
 
+COMMIT;
 END;
