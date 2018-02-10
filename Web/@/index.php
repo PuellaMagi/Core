@@ -1,5 +1,7 @@
 <?php
 
+ignore_user_abort(true);
+
 //tracking
 $Processed = -microtime(true);
 $queries = 0;
