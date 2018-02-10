@@ -172,8 +172,10 @@ public void OnClientDisconnect(int client)
     if(g_iTrackingId[client] <= 0)
         return;
     
-    char m_szQuery[512];
-    FormatEx(m_szQuery, 512, "CALL user_stats (%d, %d, %d, %d, %d, %d)", MG_Users_UserIdentity(client), g_iTrackingId[client], g_StatsClient[client][STATS_SESSION][iTodayOnlineTime], g_StatsClient[client][STATS_SESSION][iTotalOnlineTime], g_StatsClient[client][STATS_SESSION][iObserveOnlineTime], g_StatsClient[client][STATS_SESSION][iPlayOnlineTime]);
+    char m_szQuery[256], m_szUsername[32], m_szEscape[64];
+    GetClientName(client, m_szUsername, 32);
+    MG_MySQL_GetDatabase().Escape(m_szUsername, m_szEscape, 64);
+    FormatEx(m_szQuery, 256, "CALL user_stats (%d, %d, %d, %d, %d, %d, '%s')", MG_Users_UserIdentity(client), g_iTrackingId[client], g_StatsClient[client][STATS_SESSION][iTodayOnlineTime], g_StatsClient[client][STATS_SESSION][iTotalOnlineTime], g_StatsClient[client][STATS_SESSION][iObserveOnlineTime], g_StatsClient[client][STATS_SESSION][iPlayOnlineTime], m_szEscape);
     MG_MySQL_SaveDatabase(m_szQuery);
 }
 

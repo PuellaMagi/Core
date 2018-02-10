@@ -6,7 +6,8 @@ IN
     todayOnline INT(11),
     totalOnline INT(11),
     specOnline INT(11),
-    playOnline INT(11)
+    playOnline INT(11),
+    userName VARCHAR(32)
 )
 
 SQL SECURITY INVOKER
@@ -19,9 +20,10 @@ START TRANSACTION;
 
     /* UPDATE dxg_users */
     UPDATE  `dxg_users`
-    SET     `lastseen` = UNIX_TIMESTAMP()
+    SET     `lastseen` = UNIX_TIMESTAMP(),
+            `username` = `userName`
     WHERE   `uid` = `userId`;
-    
+
     IF (ROW_COUNT() > 0) THEN
         SET dbStep = dbStep + 1;
     END IF;
