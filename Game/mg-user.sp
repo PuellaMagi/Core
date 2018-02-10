@@ -85,7 +85,7 @@ public int Native_BanClient(Handle plugin, int numParams)
     
     if(!MG_MySQL_IsConnected())
         return;
-    
+
     Database db = MG_MySQL_GetDatabase();
 
     char ip[24];
