@@ -254,15 +254,23 @@ public void OnConnected(Database db, const char[] error, int retry)
 
     // server message
     PrintToServer("Database Connected!");
-
-    Call_StartForward(g_hOnConnected);
-    Call_PushCell(g_hMySQL);
-    Call_Finish();
+    
+    // timer delay to call
+    CreateTimer(1.5, Timer_OnConnected);
 }
 
 public Action Timer_Reconnect(Handle timer, int retry)
 {
     ConnectToDatabase(retry);
+    return Plugin_Stop;
+}
+
+public Action Timer_OnConnected(Handle timer)
+{
+    Call_StartForward(g_hOnConnected);
+    Call_PushCell(g_hMySQL);
+    Call_Finish();
+    
     return Plugin_Stop;
 }
 
@@ -283,7 +291,7 @@ void CheckingServer()
 {
     char m_szQuery[128];
     FormatEx(m_szQuery, 128, "SELECT * FROM `dxg_servers` WHERE `ip`='%s' AND `port`='%d'", g_szServerIp, g_iServerPort);
-    DBResultSet _result = SQL_Query(g_hMySQL, m_szQuery);
+    DBResultSet _result = SQL_Query(g_hMySQL, m_szQuery, 128);
     if(_result == null)
     {
         char error[256];
@@ -330,10 +338,18 @@ void CheckingServer()
         MG_Core_LogError("MySQL", "CheckingServer", "Update RCon password: %s", error);
     }
 
+    // timer delay to call
+    CreateTimer(1.0, Timer_ServerLoaded);
+}
+
+public Action Timer_ServerLoaded(Handle timer)
+{
     Call_StartForward(g_hOnAvailable);
     Call_PushCell(g_iServerId);
     Call_PushCell(g_iServerModId);
     Call_Finish();
+    
+    return Plugin_Stop;
 }
 
 void RetrieveInfoFromKV()
@@ -368,10 +384,8 @@ void RetrieveInfoFromKV()
     if(g_iServerId == -1)
         SetFailState("Why your server id still is -1");
     
-    Call_StartForward(g_hOnAvailable);
-    Call_PushCell(g_iServerId);
-    Call_PushCell(g_iServerModId);
-    Call_Finish();
+    // timer delay to call
+    CreateTimer(1.0, Timer_ServerLoaded);
 }
 
 void SaveInfoToKV()
