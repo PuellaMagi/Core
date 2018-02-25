@@ -10,45 +10,56 @@ IN
     userName VARCHAR(32)
 )
 
-SQL SECURITY INVOKER
+SQL SECURITY INVOKER BEGIN
 
-BEGIN
-
-DECLARE dbStep TINYINT(3) DEFAULT 0;
-
-START TRANSACTION;
-
-    /* UPDATE dxg_users */
-    UPDATE  `dxg_users`
-    SET     `lastseen` = UNIX_TIMESTAMP(),
-            `username` = `userName`
-    WHERE   `uid` = `userId`;
-
-    IF (ROW_COUNT() > 0) THEN
-        SET dbStep = dbStep + 1;
-    END IF;
-
-    UPDATE  `dxg_stats`
-    SET     `connectTimes` = `connectTimes` + 1,
-            `onlineToday`  = `onlineToday`  + `todayOnline`,
-            `onlineTotal`  = `onlineTotal`  + `totalOnline`,
-            `onlineOB`     = `onlineOB`     + `specOnline`,
-            `onlinePlay`   = `onlinePlay`   + `playOnline`
-    WHERE   `uid` = `userId`;
+    DECLARE dbStep TINYINT(3) DEFAULT 0;
     
-    IF (ROW_COUNT() > 0) THEN
-        SET dbStep = dbStep + 1;
-    END IF;
+    DECLARE EXIT handler FOR SQLEXCEPTION
+        BEGIN
+            ROLLBACK;
+            SET dbStep = -1;
+        END;
     
-    UPDATE  `dxg_analytics`
-    SET     `duration` = `totalOnline`
-    WHERE   `uid` = `userId` AND `id` = `sessionId`;
-    
-    IF (ROW_COUNT() > 0) THEN
-        SET dbStep = dbStep + 1;
-    END IF;
+    DECLARE EXIT handler FOR SQLWARNING
+        BEGIN
+            ROLLBACK;
+            SET dbStep = -1;
+        END;
+
+    START TRANSACTION;
+
+        /* UPDATE dxg_users */
+        UPDATE  `dxg_users`
+        SET     `lastseen` = UNIX_TIMESTAMP(),
+                `username` = `userName`
+        WHERE   `uid` = `userId`;
+
+        IF (ROW_COUNT() > 0) THEN
+            SET dbStep = dbStep + 1;
+        END IF;
+
+        UPDATE  `dxg_stats`
+        SET     `connectTimes` = `connectTimes` + 1,
+                `onlineToday`  = `onlineToday`  + `todayOnline`,
+                `onlineTotal`  = `onlineTotal`  + `totalOnline`,
+                `onlineOB`     = `onlineOB`     + `specOnline`,
+                `onlinePlay`   = `onlinePlay`   + `playOnline`
+        WHERE   `uid` = `userId`;
+        
+        IF (ROW_COUNT() > 0) THEN
+            SET dbStep = dbStep + 1;
+        END IF;
+        
+        UPDATE  `dxg_analytics`
+        SET     `duration` = `totalOnline`
+        WHERE   `uid` = `userId` AND `id` = `sessionId`;
+        
+        IF (ROW_COUNT() > 0) THEN
+            SET dbStep = dbStep + 1;
+        END IF;
+
+    COMMIT;
 
     SELECT dbStep;
 
-COMMIT;
 END;
