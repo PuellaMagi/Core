@@ -13,20 +13,10 @@ IN
 SQL SECURITY INVOKER BEGIN
 
     DECLARE dbStep TINYINT(3) DEFAULT 0;
-    
-    DECLARE EXIT handler FOR SQLEXCEPTION
-        BEGIN
-            ROLLBACK;
-            SET dbStep = -1;
-        END;
-    
-    DECLARE EXIT handler FOR SQLWARNING
-        BEGIN
-            ROLLBACK;
-            SET dbStep = -1;
-        END;
 
     START TRANSACTION;
+    
+        SET dbStep = 0;
 
         /* UPDATE dxg_users */
         UPDATE  `dxg_users`

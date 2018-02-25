@@ -155,11 +155,9 @@ public void OnClientDataChecked(int client, int uid)
         return;
     }
 
-    Database db = MG_MySQL_GetDatabase();
-    
     char m_szQuery[128];
     FormatEx(m_szQuery, 128, "SELECT onlineTotal, onlineToday, onlineOB, onlinePlay, connectTimes, vitality FROM dxg_stats WHERE uid = %d", uid);
-    db.Query(LoadClientCallback, m_szQuery, GetClientUserId(client));
+    MG_MySQL_GetDatabase().Query(LoadClientCallback, m_szQuery, GetClientUserId(client));
 }
 
 public void OnClientDisconnect(int client)
@@ -176,7 +174,30 @@ public void OnClientDisconnect(int client)
     GetClientName(client, m_szUsername, 32);
     MG_MySQL_GetDatabase().Escape(m_szUsername, m_szEscape, 64);
     FormatEx(m_szQuery, 256, "CALL user_stats (%d, %d, %d, %d, %d, %d, '%s')", MG_Users_UserIdentity(client), g_iTrackingId[client], g_StatsClient[client][STATS_SESSION][iTodayOnlineTime], g_StatsClient[client][STATS_SESSION][iTotalOnlineTime], g_StatsClient[client][STATS_SESSION][iObserveOnlineTime], g_StatsClient[client][STATS_SESSION][iPlayOnlineTime], m_szEscape);
-    MG_MySQL_SaveDatabase(m_szQuery);
+    DataPack pack = new DataPack();
+    pack.WriteCell(MG_Users_UserIdentity(client));
+    pack.WriteCell(g_iTrackingId[client]);
+    pack.WriteString(m_szQuery);
+    pack.Reset();
+    MG_MySQL_GetDatabase().Query(SaveClientCallback, m_szQuery, pack);
+}
+
+public void SaveClientCallback(Database db, DBResultSet results, const char[] error, DataPack pack)
+{
+    int uid = pack.ReadCell();
+    int tid = pack.ReadCell();
+    char QueryString[256];
+    pack.ReadString();
+    delete pack;
+
+    if(results == null || error[0])
+    {
+        MG_Core_LogError("Stats", "SaveClientCallback", "SQL Error:  %s -> uid[%d] tid[%d] -> %s", error, uid, tid, QueryString);
+        return;
+    }
+    
+    if(results.FetchRow() && results.FetchInt(0) != 3)
+        MG_Core_LogError("Stats", "SaveClientCallback", "SQL Error:  SQL result is wrong -> uid[%d] tid[%d] -> %s", uid, tid, QueryString);
 }
 
 public Action Timer_Retry(Handle timer, int client)
