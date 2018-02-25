@@ -71,6 +71,7 @@ CREATE TABLE `dxg_users` (
   `steamid` bigint(20) unsigned NOT NULL DEFAULT '0',
   `username` varchar(32) NOT NULL DEFAULT 'unnamed',
   `imm` tinyint(3) unsigned NOT NULL DEFAULT '0' COMMENT 'AdminImmunityLevel',
+  `grp` mediumint(9) NOT NULL DEFAULT '-1',
   `spt` tinyint(2) unsigned NOT NULL DEFAULT '0',
   `vip` tinyint(2) unsigned NOT NULL DEFAULT '0',
   `ctb` tinyint(2) unsigned NOT NULL DEFAULT '0',
@@ -84,6 +85,7 @@ CREATE TABLE `dxg_users` (
   UNIQUE KEY `steam_unique` (`steamid`),
   UNIQUE KEY `bind_unique` (`uid`,`steamid`)
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8;
+
 
 CREATE TABLE `dxg_vars` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,

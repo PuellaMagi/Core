@@ -36,6 +36,8 @@ int  g_iUserId[MAXPLAYERS+1];
 bool g_authClient[MAXPLAYERS+1][Authentication];
 bool g_bAuthLoaded[MAXPLAYERS+1];
 bool g_bBanChecked[MAXPLAYERS+1];
+bool g_bAuthLoading[MAXPLAYERS+1];
+bool g_bBansLoading[MAXPLAYERS+1];
 char g_szUsername[MAXPLAYERS+1][32];
 
 Handle g_hOnUMAuthChecked;
@@ -82,7 +84,7 @@ public int Native_BanClient(Handle plugin, int numParams)
 
     if(MG_Core_GetServerId() < 0)
         return;
-    
+
     if(!MG_MySQL_IsConnected())
         return;
 
@@ -140,16 +142,16 @@ public int Native_BanIdentity(Handle plugin, int numParams)
     // we using php auto-check target`s steam nickname.
 
     char adminName[64];
-    MG_MySQL_EscapeString(g_szUsername[admin], adminName, 64);
+    MG_MySQL_GetDatabase().Escape(g_szUsername[admin], adminName, 64);
 
     char bReason[256];
-    MG_MySQL_EscapeString(reason, bReason, 256);
+    MG_MySQL_GetDatabase().Escape(reason, bReason, 256);
 
     char m_szQuery[1024];
     FormatEx(m_szQuery, 1024, "INSERT INTO dxg_bans VALUES (DEFAULT, '%s', '127.0.0.1', 'php_auto_check', %d, %d, %d, %d, %d, %d, '%s', '%s', -1);", steamIdentity, GetTime()+length*60, btype, MG_Core_GetServerId(), MG_Core_GetServerModId(), g_iUserId[admin], g_szUsername[admin], bReason);
 
     MG_MySQL_SaveDatabase(m_szQuery);
-    
+
     PrintToChatAll(" \07*** \x02BAN \07***  \x05%s\x04已被伺服器封锁!", steamIdentity);
 }
 
@@ -172,10 +174,13 @@ public void OnClientConnected(int client)
     for(int i = 0; i < view_as<int>(Authentication); ++i)
         g_authClient[client][i] = false;
 
+    g_bAuthLoading[client] = false;
+    g_bBansLoading[client] = false;
+    
     g_bAuthLoaded[client] = false;
     g_bBanChecked[client] = false;
     g_szUsername[client][0] = '\0';
-    
+
     g_iUserId[client] = 0;
 }
 
@@ -285,7 +290,7 @@ public void OnClientAuthorized(int client, const char[] auth)
     if(!GetClientAuthId(client, AuthId_SteamID64, steamid, 32, true))
     {
         MG_Core_LogMessage("User", "OnClientAuthorized", "Error: We can not verify client`s SteamId64 -> \"%L\"", client);
-        CreateTimer(0.1, Timer_ReAuthorize, client, TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
+        CreateTimer(0.2, Timer_ReAuthorize, client, TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
         return;
     }
 
@@ -301,7 +306,7 @@ public Action Timer_ReAuthorize(Handle timer, int client)
     char steamid[32];
     if(!GetClientAuthId(client, AuthId_SteamID64, steamid, 32, true))
     {
-        MG_Core_LogMessage("User", "OnClientAuthorized", "Error: We can not verify client`s SteamId64 -> \"%L\"", client);
+        MG_Core_LogMessage("User", "Timer_ReAuthorize", "Error: We can not verify client`s SteamId64 -> \"%L\"", client);
         return Plugin_Continue;
     }
 
@@ -313,7 +318,7 @@ public Action Timer_ReAuthorize(Handle timer, int client)
 
 void LoadClientAuth(int client, const char[] steamid)
 {
-    if(g_bAuthLoaded[client])
+    if(g_bAuthLoaded[client] || g_bAuthLoading[client])
         return; 
 
     if(!MG_MySQL_IsConnected())
@@ -323,30 +328,30 @@ void LoadClientAuth(int client, const char[] steamid)
         return;
     }
 
-    Database db = MG_MySQL_GetDatabase();
-    
     char m_szQuery[256];
-    FormatEx(m_szQuery, 256, "SELECT uid, username, imm, spt, vip, ctb, opt, adm, own FROM dxg_users WHERE steamid = '%s'", steamid);
-    db.Query(LoadClientCallback, m_szQuery, GetClientUserId(client));
+    FormatEx(m_szQuery, 256, "SELECT uid, username, imm, grp, spt, vip, ctb, opt, adm, own FROM dxg_users WHERE steamid = '%s'", steamid);
+    MG_MySQL_GetDatabase().Query(LoadClientCallback, m_szQuery, GetClientUserId(client));
+    
+    g_bAuthLoading[client] = true;
 }
 
 void CheckClientBanStats(int client, const char[] steamid)
 {
-    if(g_bBanChecked[client])
+    if(g_bBanChecked[client] || g_bBansLoading[client])
         return;
 
     if(!MG_MySQL_IsConnected())
     {
         MG_Core_LogError("User", "LoadClientAuth", "Error: SQL is unavailable -> \"%L\"", client);
-        CreateTimer(5.0, Timer_ReAuthorize, client, TIMER_FLAG_NO_MAPCHANGE);
+        CreateTimer(2.0, Timer_ReAuthorize, client, TIMER_FLAG_NO_MAPCHANGE);
         return;
     }
 
-    Database db = MG_MySQL_GetDatabase();
-
     char m_szQuery[256];
     FormatEx(m_szQuery, 256, "SELECT bType, bSrv, bSrvMod, bCreated, bLength, bReason, id FROM dxg_bans WHERE steamid = '%s' AND bRemovedBy = -1", steamid);
-    db.Query(CheckBanCallback, m_szQuery, GetClientUserId(client));
+    MG_MySQL_GetDatabase().Query(CheckBanCallback, m_szQuery, GetClientUserId(client));
+    
+    g_bBansLoading[client] = true;
 }
 
 public void LoadClientCallback(Database db, DBResultSet results, const char[] error, int userid)
@@ -357,12 +362,11 @@ public void LoadClientCallback(Database db, DBResultSet results, const char[] er
 
     if(results == null || error[0])
     {
+        g_bAuthLoading[client] = false;
         MG_Core_LogError("User", "LoadClientCallback", "SQL Error:  %s -> \"%L\"", error, client);
-        CreateTimer(5.0, Timer_ReAuthorize, client, TIMER_FLAG_NO_MAPCHANGE);
+        CreateTimer(2.0, Timer_ReAuthorize, client, TIMER_FLAG_NO_MAPCHANGE);
         return;
     }
-    
-    g_bAuthLoaded[client] = true;
 
     if(results.RowCount <= 0 || !results.FetchRow())
     {
@@ -370,60 +374,67 @@ public void LoadClientCallback(Database db, DBResultSet results, const char[] er
         CallAuthForward(client);
         return;
     }
+    
+    g_bAuthLoading[client] = false;
+    g_bAuthLoaded[client]  = true;
 
     g_iUserId[client] = results.FetchInt(0);
     results.FetchString(1, g_szUsername[client], 32);
-    g_authClient[client][Spt] = (results.FetchInt(3) == 1);
-    g_authClient[client][Vip] = (results.FetchInt(4) == 1);
-    g_authClient[client][Ctb] = (results.FetchInt(5) == 1);
-    g_authClient[client][Opt] = (results.FetchInt(6) == 1);
-    g_authClient[client][Adm] = (results.FetchInt(7) == 1);
-    g_authClient[client][Own] = (results.FetchInt(8) == 1);
-
-    if(g_authClient[client][Ctb] || g_authClient[client][Opt] || g_authClient[client][Adm] || g_authClient[client][Own])
+    g_authClient[client][Spt] = (results.FetchInt(4) == 1);
+    g_authClient[client][Vip] = (results.FetchInt(5) == 1);
+    g_authClient[client][Ctb] = (results.FetchInt(6) == 1);
+    g_authClient[client][Opt] = (results.FetchInt(7) == 1);
+    g_authClient[client][Adm] = (results.FetchInt(8) == 1);
+    g_authClient[client][Own] = (results.FetchInt(9) == 1);
+    
+    int mod = results.FetchInt(3);
+    if(mod == 0 || mod == MG_Core_GetServerModId())
     {
-        AdminId _admin = GetUserAdmin(client);
-        if(_admin != INVALID_ADMIN_ID)
+        if(g_authClient[client][Ctb] || g_authClient[client][Opt] || g_authClient[client][Adm] || g_authClient[client][Own])
         {
-            RemoveAdmin(_admin);
-            SetUserAdmin(client, INVALID_ADMIN_ID);
-        }
-
-        _admin = CreateAdmin(g_szUsername[client]);
-        SetUserAdmin(client, _admin, true);
-        SetAdminImmunityLevel(_admin, results.FetchInt(2));
-
-        _admin.SetFlag(Admin_Reservation, true);
-        _admin.SetFlag(Admin_Generic, true);
-        _admin.SetFlag(Admin_Kick, true);
-        _admin.SetFlag(Admin_Slay, true);
-        _admin.SetFlag(Admin_Chat, true);
-        _admin.SetFlag(Admin_Vote, true);
-        _admin.SetFlag(Admin_Changemap, true);
-
-        if(g_authClient[client][Opt] || g_authClient[client][Adm] || g_authClient[client][Own])
-        {
-            _admin.SetFlag(Admin_Ban, true);
-            _admin.SetFlag(Admin_Unban, true);
-
-            if(g_authClient[client][Adm] || g_authClient[client][Own])
+            AdminId _admin = GetUserAdmin(client);
+            if(_admin != INVALID_ADMIN_ID)
             {
-                _admin.SetFlag(Admin_Convars, true);
-                _admin.SetFlag(Admin_Config, true);
+                RemoveAdmin(_admin);
+                SetUserAdmin(client, INVALID_ADMIN_ID);
+            }
 
-                if(g_authClient[client][Own])
+            _admin = CreateAdmin(g_szUsername[client]);
+            SetUserAdmin(client, _admin, true);
+            SetAdminImmunityLevel(_admin, results.FetchInt(2));
+
+            _admin.SetFlag(Admin_Reservation, true);
+            _admin.SetFlag(Admin_Generic, true);
+            _admin.SetFlag(Admin_Kick, true);
+            _admin.SetFlag(Admin_Slay, true);
+            _admin.SetFlag(Admin_Chat, true);
+            _admin.SetFlag(Admin_Vote, true);
+            _admin.SetFlag(Admin_Changemap, true);
+
+            if(g_authClient[client][Opt] || g_authClient[client][Adm] || g_authClient[client][Own])
+            {
+                _admin.SetFlag(Admin_Ban, true);
+                _admin.SetFlag(Admin_Unban, true);
+
+                if(g_authClient[client][Adm] || g_authClient[client][Own])
                 {
-                    _admin.SetFlag(Admin_Password, true);
-                    _admin.SetFlag(Admin_Cheats, true);
-                    _admin.SetFlag(Admin_RCON, true);
-                    _admin.SetFlag(Admin_Root, true);
+                    _admin.SetFlag(Admin_Convars, true);
+                    _admin.SetFlag(Admin_Config, true);
+
+                    if(g_authClient[client][Own])
+                    {
+                        _admin.SetFlag(Admin_Password, true);
+                        _admin.SetFlag(Admin_Cheats, true);
+                        _admin.SetFlag(Admin_RCON, true);
+                        _admin.SetFlag(Admin_Root, true);
+                    }
                 }
             }
-        }
 
-        // we give admin perm before client admin check
-        if(IsClientInGame(client))
-            RunAdminCacheChecks(client);
+            // we give admin perm before client admin check
+            if(IsClientInGame(client))
+                RunAdminCacheChecks(client);
+        }
     }
     
     CallAuthForward(client);
@@ -449,16 +460,13 @@ public void InserUserCallback(Database db, DBResultSet results, const char[] err
     if(!client)
         return;
     
-    if(results == null || error[0])
-    {
-        MG_Core_LogError("User", "CheckBanCallback", "SQL Error:  %s -> \"%L\"", error, client);
-        CreateTimer(5.0, Timer_ReAuthorize, client, TIMER_FLAG_NO_MAPCHANGE);
-        return;
-    }
-
     // Refresh client
-    OnClientConnected(client);
-    CreateTimer(1.0, Timer_ReAuthorize, client, TIMER_FLAG_NO_MAPCHANGE);
+    g_bAuthLoading[client] = false;
+    g_bAuthLoaded[client]  = false;
+    CreateTimer(2.0, Timer_ReAuthorize, client, TIMER_FLAG_NO_MAPCHANGE);
+    
+    if(results == null || error[0])
+        MG_Core_LogError("User", "CheckBanCallback", "SQL Error:  %s -> \"%L\"", error, client);
 }
 
 public void CheckBanCallback(Database db, DBResultSet results, const char[] error, int userid)
@@ -466,14 +474,16 @@ public void CheckBanCallback(Database db, DBResultSet results, const char[] erro
     int client = GetClientOfUserId(userid);
     if(!client)
         return;
+    
+    g_bBansLoading[client] = false;
 
     if(results == null || error[0])
     {
         MG_Core_LogError("User", "CheckBanCallback", "SQL Error:  %s -> \"%L\"", error, client);
-        CreateTimer(5.0, Timer_ReAuthorize, client, TIMER_FLAG_NO_MAPCHANGE);
+        CreateTimer(2.0, Timer_ReAuthorize, client, TIMER_FLAG_NO_MAPCHANGE);
         return;
     }
-    
+
     g_bBanChecked[client] = true;
     
     if(results.RowCount <= 0)
