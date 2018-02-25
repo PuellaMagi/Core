@@ -196,8 +196,8 @@ public void SaveClientCallback(Database db, DBResultSet results, const char[] er
         return;
     }
     
-    if(results.FetchRow() && results.FetchInt(0) != 3)
-        MG_Core_LogError("Stats", "SaveClientCallback", "SQL Error:  SQL result is wrong -> uid[%d] tid[%d] -> %s", uid, tid, QueryString);
+    if(results.FetchRow() && results.FetchInt(0) != 7)
+        MG_Core_LogError("Stats", "SaveClientCallback", "SQL Error:  SQL result is wrong [%d] -> uid[%d] tid[%d] -> %s", results.FetchInt(0), uid, tid, QueryString);
 }
 
 public Action Timer_Retry(Handle timer, int client)

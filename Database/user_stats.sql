@@ -37,7 +37,7 @@ SQL SECURITY INVOKER BEGIN
         WHERE   `uid` = `userId`;
         
         IF (ROW_COUNT() > 0) THEN
-            SET dbStep = dbStep + 1;
+            SET dbStep = dbStep + 2;
         END IF;
         
         UPDATE  `dxg_analytics`
@@ -45,7 +45,7 @@ SQL SECURITY INVOKER BEGIN
         WHERE   `uid` = `userId` AND `id` = `sessionId`;
         
         IF (ROW_COUNT() > 0) THEN
-            SET dbStep = dbStep + 1;
+            SET dbStep = dbStep + 4;
         END IF;
 
     COMMIT;
