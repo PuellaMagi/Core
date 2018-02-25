@@ -290,7 +290,7 @@ public void NativeSave_Callback(Database db, DBResultSet results, const char[] e
 void CheckingServer()
 {
     char m_szQuery[128];
-    FormatEx(m_szQuery, 128, "SELECT * FROM `dxg_servers` WHERE `ip`='%s' AND `port`='%d'", g_szServerIp, g_iServerPort);
+    FormatEx(m_szQuery, 128, "SELECT * FROM `dxg_servers` WHERE `ip`='%s' AND `port`='%d';", g_szServerIp, g_iServerPort);
     DBResultSet _result = SQL_Query(g_hMySQL, m_szQuery, 128);
     if(_result == null)
     {
@@ -298,11 +298,13 @@ void CheckingServer()
         SQL_GetError(g_hMySQL, error, 256);
         MG_Core_LogError("MySQL", "CheckingServer", "Query Server Info: %s", error);
         RetrieveInfoFromKV();
+        delete _result;
         return;
     }
     
     if(!_result.FetchRow())
     {
+        delete _result;
         MG_Core_LogError("MySQL", "CheckingServer", "Not Found this server in database");
         SetFailState("Not Found this server in database");
         return;
