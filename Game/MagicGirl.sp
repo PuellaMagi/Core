@@ -230,10 +230,10 @@ void ConnectToDatabase(int retry)
         return;
     }
 
-    Database.Connect(OnConnected, "default", retry);
+    SQL_TConnect(OnConnected, "default", retry);
 }
 
-public void OnConnected(Database db, const char[] error, int retry)
+public void OnConnected(Handle owner, Handle db, const char[] error, int retry)
 {
     if(db == null)
     {
@@ -245,7 +245,7 @@ public void OnConnected(Database db, const char[] error, int retry)
         return;
     }
 
-    g_hMySQL = db;
+    g_hMySQL = view_as<Database>(CloneHandle(db));
     g_hMySQL.SetCharset("utf8");
     g_bConnected = true;
 
@@ -254,7 +254,7 @@ public void OnConnected(Database db, const char[] error, int retry)
 
     // server message
     PrintToServer("Database Connected!");
-    
+
     // timer delay to call
     CreateTimer(1.5, Timer_OnConnected);
 }
