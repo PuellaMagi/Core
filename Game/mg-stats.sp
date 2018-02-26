@@ -187,7 +187,7 @@ public void SaveClientCallback(Database db, DBResultSet results, const char[] er
     int uid = pack.ReadCell();
     int tid = pack.ReadCell();
     char QueryString[256];
-    pack.ReadString();
+    pack.ReadString(QueryString, 256);
     delete pack;
 
     if(results == null || error[0])
