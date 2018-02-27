@@ -70,11 +70,11 @@ public int Native_GetVariable(Handle plugin, int numParams)
 public void OnPluginStart()
 {
     g_smVars = new StringMap();
-    
+
     CreateTimer(1800.0, Timer_Refresh, _, TIMER_REPEAT);
 }
 
-public void MG_MySQL_OnConnected(Database db)
+public void MG_Core_OnAvailable()
 {
     LoadVars();
 }
@@ -89,10 +89,10 @@ void LoadVars()
 {
     if(!MG_MySQL_IsConnected())
     {
-        CreateTimer(5.0, Timer_Retry, _, TIMER_FLAG_NO_MAPCHANGE);
+        CreateTimer(5.0, Timer_Refresh, _, TIMER_FLAG_NO_MAPCHANGE);
         return;
     }
-    
+
     MG_MySQL_GetDatabase().Query(LoadVarsCallback, "SELECT * FROM dxg_vars");
 }
 
