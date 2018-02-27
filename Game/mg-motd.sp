@@ -117,12 +117,12 @@ bool UrlToWebInterface(int client, int width, int height, const char[] url, bool
     char m_szQuery[512], m_szEscape[256];
     MG_MySQL_GetDatabase().Escape(url, m_szEscape, 256);
     FormatEx(m_szQuery, 512, "INSERT INTO `dxg_motd` (`uid`, `show`, `width`, `height`, `url`) VALUES (%d, %b, %d, %d, '%s') ON DUPLICATE KEY UPDATE `url` = VALUES(`url`), `show`=%b, `width`=%d, `height`=%d", MG_Users_UserIdentity(client), show, width, height, m_szEscape, show, width, height);
-    MG_MySQL_GetDatabase().Query(SQLCallback_WebInterface, m_szQuery, client | (view_as<int>(show) << 7), DBPrio_High);
+    MG_MySQL_GetDatabase().Query(WebInterfaceCallback, m_szQuery, client | (view_as<int>(show) << 7), DBPrio_High);
 
     return true;
 }
 
-public void SQLCallback_WebInterface(Database db, DBResultSet results, const char[] error, int data)
+public void WebInterfaceCallback(Database db, DBResultSet results, const char[] error, int data)
 {
     int client = data & 0x7f;
     bool show = (data >> 7) == 1;
@@ -131,7 +131,10 @@ public void SQLCallback_WebInterface(Database db, DBResultSet results, const cha
         return;
 
     if(results == null ||  error[0])
+    {
+        MG_Core_LogError("Vars", "WebInterfaceCallback", "SQL Error:  %s", error);
         return;
+    }
 
     ShowMOTDPanelEx(client, show);
 }
@@ -142,7 +145,7 @@ void ShowMOTDPanelEx(int client, bool show = true)
     FormatEx(url, 192, "https://magicgirl.net/motd.php?uid=%d", MG_Users_UserIdentity(client));
 
     Handle m_hKv = CreateKeyValues("data");
-    KvSetString(m_hKv, "title", "叁生鉐");
+    KvSetString(m_hKv, "title", "PuellaMagi");
     KvSetNum(m_hKv, "type", MOTDPANEL_TYPE_URL);
     KvSetString(m_hKv, "msg", url);
     KvSetNum(m_hKv, "cmd", 0);
