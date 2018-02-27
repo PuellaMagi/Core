@@ -70,28 +70,30 @@ public int Native_GetVariable(Handle plugin, int numParams)
 public void OnPluginStart()
 {
     g_smVars = new StringMap();
+    
+    CreateTimer(1800.0, Timer_Refresh, _, TIMER_REPEAT);
 }
 
 public void MG_MySQL_OnConnected(Database db)
 {
-    db.Query(LoadVarsCallback, "SELECT * FROM dxg_vars");
+    LoadVars();
 }
 
-public void OnMapStart()
+public Action Timer_Refresh(Handle timer)
+{
+    LoadVars();
+    return Plugin_Stop;
+}
+
+void LoadVars()
 {
     if(!MG_MySQL_IsConnected())
     {
-        CreateTimer(3.0, Timer_Retry, _, TIMER_FLAG_NO_MAPCHANGE);
+        CreateTimer(5.0, Timer_Retry, _, TIMER_FLAG_NO_MAPCHANGE);
         return;
     }
     
     MG_MySQL_GetDatabase().Query(LoadVarsCallback, "SELECT * FROM dxg_vars");
-}
-
-public Action Timer_Retry(Handle timer)
-{
-    OnMapStart();
-    return Plugin_Stop;
 }
 
 public void LoadVarsCallback(Database db, DBResultSet results, const char[] error, any unuse)
@@ -99,7 +101,6 @@ public void LoadVarsCallback(Database db, DBResultSet results, const char[] erro
     if(results == null || error[0])
     {
         MG_Core_LogError("Vars", "LoadVarsCallback", "SQL Error:  %s", error);
-        
         return;
     }
 
