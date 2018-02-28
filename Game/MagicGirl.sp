@@ -35,7 +35,6 @@ public Plugin myinfo =
     url         = PI_URLS
 };
 
-
 int g_iServerId = -1;
 int g_iServerPort = 27015;
 int g_iServerModId = -1;
@@ -46,12 +45,9 @@ char g_szServerIp[24]  = "127.0.0.1";
 char g_szRconPswd[24]  = "fuckMyLife";
 char g_szHostName[128] = "MagicGirl.NET - Server";
 
-Handle g_hOnConnected = INVALID_HANDLE;
-Handle g_hOnAvailable = INVALID_HANDLE;
-
-Database      g_hMySQL = null;
+Handle        g_hMySQL = null;
+Handle g_hOnAvailable  = null;
 EngineVersion g_Engine = Engine_Unknown;
-
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
 {
@@ -127,11 +123,11 @@ public int Native_SaveDatabase(Handle plugin, int numParams)
     char[] input = new char[inLen+1];
     if(GetNativeString(1, input, inLen+1) != SP_ERROR_NONE)
         return;
-    
+
     DataPack data = new DataPack();
     data.WriteString(input);
 
-    g_hMySQL.Query(NativeSave_Callback, input, data);
+    SQL_TQuery(g_hMySQL, NativeSave_Callback, input, data);
     return;
 }
 
@@ -196,7 +192,6 @@ public int Native_LogMessage(Handle plugin, int numParams)
 public void OnPluginStart()
 {
     // forwards
-    g_hOnConnected = CreateGlobalForward("MG_MySQL_OnConnected", ET_Ignore, Param_Cell);
     g_hOnAvailable = CreateGlobalForward("MG_Core_OnAvailable",  ET_Ignore, Param_Cell, Param_Cell);
 
     // connections
@@ -224,9 +219,6 @@ void ConnectToDatabase(int retry)
     if(g_hMySQL != null)
     {
         g_bConnected = true;
-        Call_StartForward(g_hOnConnected);
-        Call_PushCell(g_hMySQL);
-        Call_Finish();
         return;
     }
 
@@ -245,18 +237,21 @@ public void OnConnected(Handle owner, Handle db, const char[] error, int retry)
         return;
     }
 
-    g_hMySQL = view_as<Database>(CloneHandle(db));
-    g_hMySQL.SetCharset("utf8");
+    g_hMySQL = db;
+    SQL_SetCharset(g_hMySQL, "utf8");
     g_bConnected = true;
-
-    // parse data
-    CheckingServer();
-
+    
     // server message
     PrintToServer("Database Connected!");
 
-    // timer delay to call
-    CreateTimer(1.5, Timer_OnConnected);
+    // parse data
+    CheckingServer();
+    
+    // server loaded
+    Call_StartForward(g_hOnAvailable);
+    Call_PushCell(g_iServerId);
+    Call_PushCell(g_iServerModId);
+    Call_Finish();
 }
 
 public Action Timer_Reconnect(Handle timer, int retry)
@@ -265,18 +260,9 @@ public Action Timer_Reconnect(Handle timer, int retry)
     return Plugin_Stop;
 }
 
-public Action Timer_OnConnected(Handle timer)
+public void NativeSave_Callback(Handle owner, Handle hndl, const char[] error, DataPack pack)
 {
-    Call_StartForward(g_hOnConnected);
-    Call_PushCell(g_hMySQL);
-    Call_Finish();
-    
-    return Plugin_Stop;
-}
-
-public void NativeSave_Callback(Database db, DBResultSet results, const char[] error, DataPack pack)
-{
-    if(results == null || error[0] || results.AffectedRows == 0)
+    if(hndl == null || error[0] || SQL_GetAffectedRows(hndl) == 0)
     {
         char m_szQueryString[2048];
         pack.Reset();
@@ -291,30 +277,30 @@ void CheckingServer()
 {
     char m_szQuery[128];
     FormatEx(m_szQuery, 128, "SELECT * FROM `dxg_servers` WHERE `ip`='%s' AND `port`='%d';", g_szServerIp, g_iServerPort);
-    DBResultSet _result = SQL_Query(g_hMySQL, m_szQuery, 128);
-    if(_result == null)
+    DBResultSet results = SQL_Query(g_hMySQL, m_szQuery, 128);
+    if(results == null)
     {
         char error[256];
         SQL_GetError(g_hMySQL, error, 256);
         MG_Core_LogError("MySQL", "CheckingServer", "Query Server Info: %s", error);
         RetrieveInfoFromKV();
-        delete _result;
+        delete results;
         return;
     }
-    
-    if(!_result.FetchRow())
+
+    if(!results.FetchRow())
     {
-        delete _result;
+        delete results;
         MG_Core_LogError("MySQL", "CheckingServer", "Not Found this server in database");
         SetFailState("Not Found this server in database");
         return;
     }
 
-    g_iServerId = _result.FetchInt(0);
-    g_iServerModId = _result.FetchInt(1);
-    _result.FetchString(2, g_szHostName, 128);
-    
-    delete _result;
+    g_iServerId = results.FetchInt(0);
+    g_iServerModId = results.FetchInt(1);
+    results.FetchString(2, g_szHostName, 128);
+
+    delete results;
 
     if(g_Engine == Engine_CSGO)
     {
@@ -339,19 +325,6 @@ void CheckingServer()
         SQL_GetError(g_hMySQL, error, 256);
         MG_Core_LogError("MySQL", "CheckingServer", "Update RCon password: %s", error);
     }
-
-    // timer delay to call
-    CreateTimer(1.0, Timer_ServerLoaded);
-}
-
-public Action Timer_ServerLoaded(Handle timer)
-{
-    Call_StartForward(g_hOnAvailable);
-    Call_PushCell(g_iServerId);
-    Call_PushCell(g_iServerModId);
-    Call_Finish();
-    
-    return Plugin_Stop;
 }
 
 void RetrieveInfoFromKV()
@@ -370,6 +343,7 @@ void RetrieveInfoFromKV()
     g_iServerId = kv.GetNum("serverid", -1);
     g_iServerModId = kv.GetNum("modid", -1);
     kv.GetString("hostname", g_szHostName, 128, "MagicGirl.NET - Server");
+    delete kv;
     
     if(g_Engine == Engine_CSGO)
     {
@@ -379,15 +353,10 @@ void RetrieveInfoFromKV()
             host_name_store.SetString("1", false, false);
     }
 
-    SetConVarString(FindConVar("hostname"), g_szHostName, false, false);
+    FindConVar("hostname").SetString(g_szHostName, false, false);
 
-    delete kv;
-    
     if(g_iServerId == -1)
         SetFailState("Why your server id still is -1");
-    
-    // timer delay to call
-    CreateTimer(1.0, Timer_ServerLoaded);
 }
 
 void SaveInfoToKV()
@@ -402,7 +371,7 @@ void SaveInfoToKV()
     char path[128];
     BuildPath(Path_SM, path, 128, "configs/MagicGirl.core");
     kv.ExportToFile(path);
-    
+
     delete kv;
 }
 
@@ -449,5 +418,5 @@ public void OnMapStart()
         GameRules_SetProp("m_bIsValveDS", 1, 0, 0, true);
     }
 
-    SetConVarString(FindConVar("hostname"), g_szHostName, false, false);
+    FindConVar("hostname").SetString(g_szHostName, false, false);
 }
