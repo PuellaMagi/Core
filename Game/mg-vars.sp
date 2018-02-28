@@ -71,12 +71,8 @@ public void OnPluginStart()
 {
     g_smVars = new StringMap();
 
-    CreateTimer(1800.0, Timer_Refresh, _, TIMER_REPEAT);
-}
-
-public void MG_Core_OnAvailable()
-{
     LoadVars();
+    CreateTimer(1800.0, Timer_Refresh, _, TIMER_REPEAT);
 }
 
 public Action Timer_Refresh(Handle timer)
@@ -93,6 +89,7 @@ void LoadVars()
         return;
     }
 
+    PrintToServer("Load Variables From SQL Database...");
     MG_MySQL_GetDatabase().Query(LoadVarsCallback, "SELECT * FROM dxg_vars");
 }
 
@@ -117,7 +114,30 @@ public void LoadVarsCallback(Database db, DBResultSet results, const char[] erro
         {
             ConVar cvar = FindConVar(_key);
             if(cvar != null)
+            {
                 cvar.SetString(_var, true, false);
+                
+                if(results.FetInt(4) == 1)
+                    cvar.AddChangeHook(Hook_OnConVarChanged);
+            }
         }
     }
+}
+
+public void Hook_OnConVarChanged(ConVar convar, const char[] oldValue, const char[] newValue)
+{
+    char cvar[128];
+    convar.GetName(cvar, 128);
+    
+    char _var[128];
+    if(!g_smVars.GetString(cvar, _var, 128))
+    {
+        convar.RemoveChangeHook(Hook_OnConVarChanged);
+        return;
+    }
+
+    if(strcmp(newValue, _var) == 0)
+        return;
+
+    convar.SetString(_var, true, false);
 }
