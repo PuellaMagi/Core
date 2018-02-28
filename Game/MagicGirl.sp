@@ -45,9 +45,9 @@ char g_szServerIp[24]  = "127.0.0.1";
 char g_szRconPswd[24]  = "fuckMyLife";
 char g_szHostName[128] = "MagicGirl.NET - Server";
 
-Handle        g_hMySQL = null;
-Handle g_hOnAvailable  = null;
-EngineVersion g_Engine = Engine_Unknown;
+Database      g_hMySQL        = null;
+Handle        g_hOnAvailable  = null;
+EngineVersion g_Engine        = Engine_Unknown;
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
 {
@@ -59,11 +59,11 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
     CreateNative("MG_MySQL_EscapeString", Native_EscapeString);
     CreateNative("MG_MySQL_SaveDatabase", Native_SaveDatabase);
     CreateNative("MG_MySQL_ExecDatabase", Native_ExecDatabase);
-    
+
     // core
     CreateNative("MG_Core_GetServerId",    Native_GetServerId);
     CreateNative("MG_Core_GetServerModId", Native_GetServerModId);
-    
+
     // logs
     CreateNative("MG_Core_LogError",   Native_LogError);
     CreateNative("MG_Core_LogMessage", Native_LogMessage);
@@ -96,18 +96,19 @@ public int Native_EscapeString(Handle plugin, int numParams)
     // database is unavailable
     if(!g_bConnected || g_hMySQL == null)
         return false;
-    
+
     // dynamic length
     int inLen = 0;
     GetNativeStringLength(1, inLen);
     char[] input = new char[inLen+1];
     if(GetNativeString(1, input, inLen+1) != SP_ERROR_NONE)
         return false;
-    
-    char[] output = new char[GetNativeCell(3)];
-    if(!g_hMySQL.Escape(input, output, GetNativeCell(3)))
+
+    int maxLen = strlen(input)*2+1;
+    char[] output = new char[maxLen];
+    if(!g_hMySQL.Escape(input, output, maxLen))
         return false;
-    
+
     return (SetNativeString(2, output, GetNativeCell(3), true) == SP_ERROR_NONE);
 }
 
@@ -116,19 +117,19 @@ public int Native_SaveDatabase(Handle plugin, int numParams)
     // database is unavailable
     if(!g_bConnected || g_hMySQL == null)
         return;
-    
+
     // dynamic length
     int inLen = 0;
     GetNativeStringLength(1, inLen);
-    char[] input = new char[inLen+1];
-    if(GetNativeString(1, input, inLen+1) != SP_ERROR_NONE)
+    char[] input = new char[++inLen];
+    if(GetNativeString(1, input, inLen) != SP_ERROR_NONE)
         return;
 
     DataPack data = new DataPack();
+    data.WriteCell(inLen);
     data.WriteString(input);
 
-    SQL_TQuery(g_hMySQL, NativeSave_Callback, input, data);
-    return;
+    g_hMySQL.Query(NativeSave_Callback, input, data, DBPrio_High);
 }
 
 public int Native_ExecDatabase(Handle plugin, int numParams)
@@ -136,12 +137,12 @@ public int Native_ExecDatabase(Handle plugin, int numParams)
     // database is unavailable
     if(!g_bConnected || g_hMySQL == null)
         return view_as<int>(INVALID_HANDLE);
-    
+
     // dynamic length
     int inLen = 0;
     GetNativeStringLength(1, inLen);
-    char[] input = new char[inLen+1];
-    if(GetNativeString(1, input, inLen+1) != SP_ERROR_NONE)
+    char[] input = new char[++inLen];
+    if(GetNativeString(1, input, inLen) != SP_ERROR_NONE)
         return view_as<int>(INVALID_HANDLE);
 
     return view_as<int>(SQL_Query(g_hMySQL, input));
@@ -166,10 +167,10 @@ public int Native_LogError(Handle plugin, int numParams)
 
     char error[2048];
     FormatNativeString(0, 0, 4, 2048, _, error, format);
-    
+
     char path[128];
     BuildPath(Path_SM, path, 128, "logs/MagicGirl.Net/%s_err.log", module);
-    
+
     LogToFileEx(path, "[%s] -> %s", func, error);
 }
 
@@ -182,7 +183,7 @@ public int Native_LogMessage(Handle plugin, int numParams)
 
     char message[2048];
     FormatNativeString(0, 0, 4, 2048, _, message, format);
-    
+
     char path[128];
     BuildPath(Path_SM, path, 128, "logs/MagicGirl.Net/%s_msg.log", module);
     
@@ -196,12 +197,12 @@ public void OnPluginStart()
 
     // connections
     ConnectToDatabase(0);
-    
+
     // log dir
     CheckLogsDirectory();
 }
 
-public void CheckLogsDirectory()
+void CheckLogsDirectory()
 {
     char path[128];
     BuildPath(Path_SM, path, 128, "logs/MagicGirl.Net");
@@ -222,10 +223,10 @@ void ConnectToDatabase(int retry)
         return;
     }
 
-    SQL_TConnect(OnConnected, "default", retry);
+    Database.Connect(OnConnected, "default", retry);
 }
 
-public void OnConnected(Handle owner, Handle db, const char[] error, int retry)
+public void OnConnected(Database db, const char[] error, int retry)
 {
     if(db == null)
     {
@@ -238,20 +239,16 @@ public void OnConnected(Handle owner, Handle db, const char[] error, int retry)
     }
 
     g_hMySQL = db;
-    SQL_SetCharset(g_hMySQL, "utf8");
+    g_hMySQL.SetCharset("utf8");
     g_bConnected = true;
-    
+
     // server message
     PrintToServer("Database Connected!");
 
     // parse data
-    CheckingServer();
-    
-    // server loaded
-    Call_StartForward(g_hOnAvailable);
-    Call_PushCell(g_iServerId);
-    Call_PushCell(g_iServerModId);
-    Call_Finish();
+    char m_szQuery[128];
+    FormatEx(m_szQuery, 128, "SELECT * FROM `dxg_servers` WHERE `ip`='%s' AND `port`='%d';", g_szServerIp, g_iServerPort);
+    db.Query(ServerDataCallback, m_szQuery, _, DBPrio_High);
 }
 
 public Action Timer_Reconnect(Handle timer, int retry)
@@ -260,71 +257,65 @@ public Action Timer_Reconnect(Handle timer, int retry)
     return Plugin_Stop;
 }
 
-public void NativeSave_Callback(Handle owner, Handle hndl, const char[] error, DataPack pack)
+public void ServerDataCallback(Database db, DBResultSet results, const char[] error, any unuse)
 {
-    if(hndl == null || error[0] || SQL_GetAffectedRows(hndl) == 0)
+    if(results == null || error[0])
     {
-        char m_szQueryString[2048];
-        pack.Reset();
-        pack.ReadString(m_szQueryString, 2048);
-        MG_Core_LogError("MySQL", "NativeSave_Callback", "SQL Error: %s\nQuery: %s", (results == null || error[0]) ? error : "No affected row", m_szQueryString);
-    }
-
-    delete pack;
-}
-
-void CheckingServer()
-{
-    char m_szQuery[128];
-    FormatEx(m_szQuery, 128, "SELECT * FROM `dxg_servers` WHERE `ip`='%s' AND `port`='%d';", g_szServerIp, g_iServerPort);
-    DBResultSet results = SQL_Query(g_hMySQL, m_szQuery, 128);
-    if(results == null)
-    {
-        char error[256];
-        SQL_GetError(g_hMySQL, error, 256);
-        MG_Core_LogError("MySQL", "CheckingServer", "Query Server Info: %s", error);
+        MG_Core_LogError("MySQL", "ServerDataCallback", "Query Server Info: %s", error);
         RetrieveInfoFromKV();
-        delete results;
-        return;
     }
-
-    if(!results.FetchRow())
+    else
     {
-        delete results;
-        MG_Core_LogError("MySQL", "CheckingServer", "Not Found this server in database");
-        SetFailState("Not Found this server in database");
-        return;
+        if(!results.FetchRow())
+        {
+            MG_Core_LogError("MySQL", "ServerDataCallback", "Not Found this server in database");
+            SetFailState("Not Found this server in database");
+            return;
+        }
+
+        g_iServerId = results.FetchInt(0);
+        g_iServerModId = results.FetchInt(1);
+        results.FetchString(2, g_szHostName, 128);
+
+        SaveInfoToKV();
     }
 
-    g_iServerId = results.FetchInt(0);
-    g_iServerModId = results.FetchInt(1);
-    results.FetchString(2, g_szHostName, 128);
-
-    delete results;
-
-    if(g_Engine == Engine_CSGO)
-    {
-        // fix host name in gotv
-        ConVar host_name_store = FindConVar("host_name_store");
-        if(host_name_store != null)
-            host_name_store.SetString("1", false, false);
-    }
-
-    SetConVarString(FindConVar("hostname"), g_szHostName, false, false);
-
-    SaveInfoToKV();
+    // apply configs
+    OnMapStart();
 
     // we used random rcon password.
     GenerateRandomString(g_szRconPswd, 24);
 
     // sync to database
+    char m_szQuery[128];
     FormatEx(m_szQuery, 128, "UPDATE `dxg_servers` SET `rcon`='%s' WHERE `sid`='%d';", g_szRconPswd, g_iServerId);
-    if(!SQL_FastQuery(g_hMySQL, m_szQuery, 128))
+    db.Query(UpdatePasswordCallback, m_szQuery, _, DBPrio_High);
+}
+
+public void UpdatePasswordCallback(Database db, DBResultSet results, const char[] error, any unuse)
+{
+    if(results == null || error[0])
+        MG_Core_LogError("MySQL", "UpdatePasswordCallback", "Update RCon password: %s", error);
+    
+    // server loaded
+    Call_StartForward(g_hOnAvailable);
+    Call_PushCell(g_iServerId);
+    Call_PushCell(g_iServerModId);
+    Call_Finish();
+}
+
+public void NativeSave_Callback(Database db, DBResultSet results, const char[] error, DataPack pack)
+{
+    if(results == null || error[0] || results.AffectedRows == 0)
     {
-        char error[256];
-        SQL_GetError(g_hMySQL, error, 256);
-        MG_Core_LogError("MySQL", "CheckingServer", "Update RCon password: %s", error);
+        pack.Reset();
+        int strLen = pack.ReadCell();
+        char[] str = new char[strLen];
+        pack.ReadString(str, strLen);
+        MG_Core_LogError("MySQL", "NativeSave_Callback", "SQL Error: %s\nQuery: %s", (results == null || error[0]) ? error : "No affected row", str);
     }
+
+    delete pack;
 }
 
 void RetrieveInfoFromKV()
@@ -344,16 +335,6 @@ void RetrieveInfoFromKV()
     g_iServerModId = kv.GetNum("modid", -1);
     kv.GetString("hostname", g_szHostName, 128, "MagicGirl.NET - Server");
     delete kv;
-    
-    if(g_Engine == Engine_CSGO)
-    {
-        // fix host name in gotv
-        ConVar host_name_store = FindConVar("host_name_store");
-        if(host_name_store != null)
-            host_name_store.SetString("1", false, false);
-    }
-
-    FindConVar("hostname").SetString(g_szHostName, false, false);
 
     if(g_iServerId == -1)
         SetFailState("Why your server id still is -1");

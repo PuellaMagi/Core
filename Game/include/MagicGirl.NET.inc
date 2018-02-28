@@ -31,7 +31,6 @@
 
 #define _MagicGirl_Core_Include_
 
-forward void MG_MySQL_OnConnected(Database mysql);
 forward void MG_Core_OnAvailable(int serverId, int modId);
 
 // core
@@ -42,9 +41,9 @@ native int  MG_Core_GetServerModId();
 
 // database
 native bool MG_MySQL_IsConnected();
-native Database MG_MySQL_GetDatabase();
 native bool MG_MySQL_EscapeString(const char[] input, char[] output, int maxLen);
 native void MG_MySQL_SaveDatabase(const char[] QueryString);
+native Database    MG_MySQL_GetDatabase();
 native DBResultSet MG_MySQL_ExecDatabase(const char[] QueryString);
 
 public SharedPlugin __pl_MagicGirl =
