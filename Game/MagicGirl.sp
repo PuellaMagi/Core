@@ -3,7 +3,7 @@
 /*                      MagicGirl.NET Core                        */
 /*                                                                */
 /*                                                                */
-/*  File:          MagicGirl.NET.inc                              */
+/*  File:          MagicGirl.sp                                   */
 /*  Description:   Interconnector of Game and Forum.              */
 /*                                                                */
 /*                                                                */

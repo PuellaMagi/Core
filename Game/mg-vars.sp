@@ -1,6 +1,6 @@
 /******************************************************************/
 /*                                                                */
-/*                  MagicGirl.NET User Manager                    */
+/*                  MagicGirl.NET Variables                       */
 /*                                                                */
 /*                                                                */
 /*  File:          mg-vars.sp                                     */

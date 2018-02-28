@@ -1,6 +1,6 @@
 /******************************************************************/
 /*                                                                */
-/*                  MagicGirl.NET User Manager                    */
+/*                  MagicGirl.NET Stats                           */
 /*                                                                */
 /*                                                                */
 /*  File:          mg-stats.sp                                    */
