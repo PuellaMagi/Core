@@ -50,10 +50,6 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 
 public int Native_ShowNormalMotd(Handle plugin, int numParams)
 {
-    // db is unavailable
-    if(!MG_MySQL_IsConnected())
-        return false;
-    
     int client = GetNativeCell(1);
 
     if(!IsValidClient(client))
@@ -79,10 +75,6 @@ public int Native_ShowNormalMotd(Handle plugin, int numParams)
 
 public int Native_ShowHiddenMotd(Handle plugin, int numParams)
 {
-    // db is unavailable
-    if(!MG_MySQL_IsConnected())
-        return false;
-    
     int client = GetNativeCell(1);
 
     if(!IsValidClient(client))
@@ -97,10 +89,6 @@ public int Native_ShowHiddenMotd(Handle plugin, int numParams)
 
 public int Native_RemoveMotd(Handle plugin, int numParams)
 {
-    // db is unavailable
-    if(!MG_MySQL_IsConnected())
-        return;
-
     int client = GetNativeCell(1);
 
     if(!IsValidClient(client))
@@ -111,6 +99,10 @@ public int Native_RemoveMotd(Handle plugin, int numParams)
 
 bool UrlToWebInterface(int client, int width, int height, const char[] url, bool show)
 {
+    // db is unavailable
+    if(!MG_MySQL_IsConnected())
+        return false;
+
     if(MG_Users_UserIdentity(client) < 1)
         return false;
 
@@ -144,13 +136,15 @@ void ShowMOTDPanelEx(int client, bool show = true)
     char url[192];
     FormatEx(url, 192, "https://magicgirl.net/motd.php?uid=%d", MG_Users_UserIdentity(client));
 
-    Handle m_hKv = CreateKeyValues("data");
-    KvSetString(m_hKv, "title", "PuellaMagi");
-    KvSetNum(m_hKv, "type", MOTDPANEL_TYPE_URL);
-    KvSetString(m_hKv, "msg", url);
-    KvSetNum(m_hKv, "cmd", 0);
-    ShowVGUIPanel(client, "info", m_hKv, show);
-    CloseHandle(m_hKv);
+    KeyValues  = new KeyValues("data");
+    kv.SetString("title", "PuellaMagi");
+    kv.SetNum("type", MOTDPANEL_TYPE_URL);
+    kv.SetString("msg", url);
+    kv.SetNum("cmd", 0);
+
+    ShowVGUIPanel(client, "info", kv, show);
+
+    delete kv;
 }
 
 void BuildSetupResolutionMenu(int client, const char[] url)
