@@ -117,7 +117,7 @@ public void LoadVarsCallback(Database db, DBResultSet results, const char[] erro
             {
                 cvar.SetString(_var, true, false);
                 
-                if(results.FetInt(4) == 1)
+                if(results.FetchInt(4) == 1)
                     cvar.AddChangeHook(Hook_OnConVarChanged);
             }
         }

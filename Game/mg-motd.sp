@@ -136,7 +136,7 @@ void ShowMOTDPanelEx(int client, bool show = true)
     char url[192];
     FormatEx(url, 192, "https://magicgirl.net/motd.php?uid=%d", MG_Users_UserIdentity(client));
 
-    KeyValues  = new KeyValues("data");
+    KeyValues kv = new KeyValues("data");
     kv.SetString("title", "PuellaMagi");
     kv.SetNum("type", MOTDPANEL_TYPE_URL);
     kv.SetString("msg", url);
