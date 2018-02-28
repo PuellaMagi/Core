@@ -8,7 +8,7 @@
 /*                                                                */
 /*                                                                */
 /*  Copyright (C) 2018  MagicGirl.NET Dev Team                    */
-/*  2017/01/23 18:54:45                                           */
+/*  2018/01/23 18:54:45                                           */
 /*                                                                */
 /*  This code is licensed under the Apache License.               */
 /*                                                                */
