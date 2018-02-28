@@ -45,6 +45,7 @@ char g_szServerIp[24]  = "127.0.0.1";
 char g_szRconPswd[24]  = "fuckMyLife";
 char g_szHostName[128] = "MagicGirl.NET - Server";
 
+ArrayList     g_aQueriesQueue = null;
 Database      g_hMySQL        = null;
 Handle        g_hOnAvailable  = null;
 EngineVersion g_Engine        = Engine_Unknown;
@@ -114,16 +115,19 @@ public int Native_EscapeString(Handle plugin, int numParams)
 
 public int Native_SaveDatabase(Handle plugin, int numParams)
 {
-    // database is unavailable
-    if(!g_bConnected || g_hMySQL == null)
-        return;
-
     // dynamic length
     int inLen = 0;
     GetNativeStringLength(1, inLen);
     char[] input = new char[++inLen];
     if(GetNativeString(1, input, inLen) != SP_ERROR_NONE)
         return;
+
+    // database is unavailable
+    if(!g_bConnected || g_hMySQL == null)
+    {
+        g_aQueriesQueue.PushString(input);
+        return;
+    }
 
     DataPack data = new DataPack();
     data.WriteCell(inLen);
@@ -192,6 +196,9 @@ public int Native_LogMessage(Handle plugin, int numParams)
 
 public void OnPluginStart()
 {
+    // queries queue
+    g_aQueriesQueue = new ArrayList(ByteCountToCell(2048));
+
     // forwards
     g_hOnAvailable = CreateGlobalForward("MG_Core_OnAvailable",  ET_Ignore, Param_Cell, Param_Cell);
 
@@ -246,9 +253,22 @@ public void OnConnected(Database db, const char[] error, int retry)
     PrintToServer("Database Connected!");
 
     // parse data
-    char m_szQuery[128];
-    FormatEx(m_szQuery, 128, "SELECT * FROM `dxg_servers` WHERE `ip`='%s' AND `port`='%d';", g_szServerIp, g_iServerPort);
+    char m_szQuery[2048];
+    FormatEx(m_szQuery, 2048, "SELECT * FROM `dxg_servers` WHERE `ip`='%s' AND `port`='%d';", g_szServerIp, g_iServerPort);
     db.Query(ServerDataCallback, m_szQuery, _, DBPrio_High);
+    
+    // process queue
+    while(g_aQueriesQueue.Length)
+    {
+        g_aQueriesQueue.GetString(m_szQuery, 2048);
+        g_aQueriesQueue.Erase(0);
+        
+        DataPack data = new DataPack();
+        data.WriteCell(strlen(m_szQuery)+1);
+        data.WriteString(m_szQuery);
+
+        db.Query(NativeSave_Callback, m_szQuery, data, DBPrio_High);
+    }
 }
 
 public Action Timer_Reconnect(Handle timer, int retry)
