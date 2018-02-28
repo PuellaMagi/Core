@@ -49,14 +49,14 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 {
     // Auth
     CreateNative("MG_Users_IsAuthorized", Native_IsAuthorized);
-    
+
     // Identity
     CreateNative("MG_Users_UserIdentity", Native_UserIdentity);
-    
+
     // Banning
     CreateNative("MG_Users_BanClient",    Native_BanClient);
     CreateNative("MG_Users_BanIdentity",  Native_BanIdentity);
-    
+
     // lib
     RegPluginLibrary("mg-user");
 
@@ -135,11 +135,30 @@ public int Native_BanIdentity(Handle plugin, int numParams)
     int length = GetNativeCell(4);
     char reason[128];
     GetNativeString(5, reason, 128);
-    
+
     if(MG_Core_GetServerId() < 0)
         return;
 
     // we using php auto-check target`s steam nickname.
+    char ip[32], targetName[64];
+    int target = FindClientByIdentity(steamIdentity);
+    if(target != -1)
+    {
+        GetClientIP(target, ip, 32);
+
+        char _name[32];
+        GetClientName(target, _name, 32);
+        MG_MySQL_GetDatabase().Escape(_name, targetName, 64);
+        
+        PrintToChatAll(" \07*** \x02BAN \07***  \x05%s\x04已被伺服器封锁!", _name);
+    }
+    else
+    {
+        strcopy(ip,         32, "127.0.0.1");
+        strcopy(targetName, 64, "php_auto_check");
+        
+        PrintToChatAll(" \07*** \x02BAN \07***  \x05%s\x04已被伺服器封锁!", steamIdentity);
+    }
 
     char adminName[64];
     MG_MySQL_GetDatabase().Escape(g_szUsername[admin], adminName, 64);
@@ -148,11 +167,9 @@ public int Native_BanIdentity(Handle plugin, int numParams)
     MG_MySQL_GetDatabase().Escape(reason, bReason, 256);
 
     char m_szQuery[1024];
-    FormatEx(m_szQuery, 1024, "INSERT INTO dxg_bans VALUES (DEFAULT, '%s', '127.0.0.1', 'php_auto_check', %d, %d, %d, %d, %d, %d, '%s', '%s', -1);", steamIdentity, GetTime()+length*60, btype, MG_Core_GetServerId(), MG_Core_GetServerModId(), g_iUserId[admin], g_szUsername[admin], bReason);
+    FormatEx(m_szQuery, 1024, "INSERT INTO dxg_bans VALUES (DEFAULT, '%s', '%s', '%s', %d, %d, %d, %d, %d, %d, '%s', '%s', -1);", steamIdentity, ip, targetName, GetTime()+length*60, btype, MG_Core_GetServerId(), MG_Core_GetServerModId(), g_iUserId[admin], g_szUsername[admin], bReason);
 
     MG_MySQL_SaveDatabase(m_szQuery);
-
-    PrintToChatAll(" \07*** \x02BAN \07***  \x05%s\x04已被伺服器封锁!", steamIdentity);
 }
 
 public void OnPluginStart()
@@ -215,67 +232,12 @@ public Action Timer_Waiting(Handle timer, int client)
 
 public void OnRebuildAdminCache(AdminCachePart part)
 {
+    char steamid[32];
     if(part == AdminCache_Admins)
         for(int client = 1; client <= MaxClients; ++client)
             if(IsClientAuthorized(client))
-                OnClientAuthorized(client, "");
-}
-
-public Action Command_Who(int client, const char[] command, int argc)
-{
-    if(!IsValidClient(client))
-        return Plugin_Handled;
-
-    static int _iLastUse[MAXPLAYERS+1] = {0, ...};
-    
-    if(_iLastUse[client] > GetTime() - 5)
-        return Plugin_Handled;
-    
-    _iLastUse[client] = GetTime();
-
-    // dont print all in one time. if players > 48 will not working.
-    CreateTimer(0.3, Timer_PrintConsole, client, TIMER_REPEAT);
-    
-    return Plugin_Handled;
-}
-
-public Action Timer_PrintConsole(Handle timer, int client)
-{
-    static int _iCurrentIndex[MAXPLAYERS+1] = {0, ...};
-    
-    if(!IsClientInGame(client))
-    {
-        _iCurrentIndex[client] = 0;
-        return Plugin_Stop;
-    }
-
-    int left = 16; // we loop 16 clients one time.
-    while(left--)
-    {
-        if(_iCurrentIndex[client] == 0)
-            PrintToConsole(client, "#slot    userid      name      Supporter    Vip    Contributor    Operator    Administrator    Owner");
-
-        int index = ++_iCurrentIndex[client];
-        
-        if(index >= MaxClients)
-        {
-            _iCurrentIndex[client] = 0;
-            return Plugin_Stop;
-        }
-
-        if(!IsValidClient(index))
-            continue;
-        
-        char strSlot[8], strUser[8];
-        StringPad(index, 4, ' ', strSlot, 8);
-        StringPad(GetClientUserId(index), 6, ' ', strUser, 8);
-        char strFlag[5][4];
-        for(int x = 0; x < 5; ++x)
-            TickOrCross(g_authClient[index][x], strFlag[x]);
-        PrintToConsole(client, "#%s    %s    %N    %s    %s    %s    %s    %s", strSlot, strUser, index, strFlag[0], strFlag[1], strFlag[2], strFlag[3], strFlag[4]);
-    }
-
-    return Plugin_Continue;
+                if(GetClientAuthId(client, AuthId_SteamID64, steamid, 32, true))
+                    LoadClientAuth(client, steamid);
 }
 
 public void OnClientAuthorized(int client, const char[] auth)
@@ -287,71 +249,62 @@ public void OnClientAuthorized(int client, const char[] auth)
     }
 
     char steamid[32];
-    if(!GetClientAuthId(client, AuthId_SteamID64, steamid, 32, true))
-    {
-        MG_Core_LogMessage("User", "OnClientAuthorized", "Error: We can not verify client`s SteamId64 -> \"%L\"", client);
-        CreateTimer(0.2, Timer_ReAuthorize, client, TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
-        return;
-    }
+    GetClientAuthId(client, AuthId_SteamID64, steamid, 32, true);
 
     LoadClientAuth(client, steamid);
     CheckClientBanStats(client, steamid);
-}
-
-public Action Timer_ReAuthorize(Handle timer, int client)
-{
-    if(!IsClientConnected(client))
-        return Plugin_Stop;
-
-    char steamid[32];
-    if(!GetClientAuthId(client, AuthId_SteamID64, steamid, 32, true))
-    {
-        MG_Core_LogMessage("User", "Timer_ReAuthorize", "Error: We can not verify client`s SteamId64 -> \"%L\"", client);
-        return Plugin_Continue;
-    }
-
-    LoadClientAuth(client, steamid);
-    CheckClientBanStats(client, steamid);
-    
-    return Plugin_Stop;
 }
 
 void LoadClientAuth(int client, const char[] steamid)
 {
-    if(g_bAuthLoaded[client] || g_bAuthLoading[client])
-        return; 
-
     if(!MG_MySQL_IsConnected())
     {
         MG_Core_LogError("User", "LoadClientAuth", "Error: SQL is unavailable -> \"%L\"", client);
-        CreateTimer(5.0, Timer_ReAuthorize, client, TIMER_FLAG_NO_MAPCHANGE);
+        CreateTimer(1.0, Timer_ReloadAuth, client, TIMER_FLAG_NO_MAPCHANGE);
         return;
     }
 
     char m_szQuery[256];
     FormatEx(m_szQuery, 256, "SELECT uid, username, imm, grp, spt, vip, ctb, opt, adm, own FROM dxg_users WHERE steamid = '%s'", steamid);
     MG_MySQL_GetDatabase().Query(LoadClientCallback, m_szQuery, GetClientUserId(client));
+}
+
+public Action Timer_ReloadAuth(Handle timer, int client)
+{
+    if(!IsClientConnected(client))
+        return Plugin_Stop;
+
+    char steamid[32];
+    GetClientAuthId(client, AuthId_SteamID64, steamid, 32, true);
+    LoadClientAuth(client, steamid);
     
-    g_bAuthLoading[client] = true;
+    return Plugin_Stop;
 }
 
 void CheckClientBanStats(int client, const char[] steamid)
 {
-    if(g_bBanChecked[client] || g_bBansLoading[client])
-        return;
-
     if(!MG_MySQL_IsConnected())
     {
         MG_Core_LogError("User", "LoadClientAuth", "Error: SQL is unavailable -> \"%L\"", client);
-        CreateTimer(2.0, Timer_ReAuthorize, client, TIMER_FLAG_NO_MAPCHANGE);
+        CreateTimer(1.0, Timer_ReloadBans, client, TIMER_FLAG_NO_MAPCHANGE);
         return;
     }
 
     char m_szQuery[256];
     FormatEx(m_szQuery, 256, "SELECT bType, bSrv, bSrvMod, bCreated, bLength, bReason, id FROM dxg_bans WHERE steamid = '%s' AND bRemovedBy = -1", steamid);
     MG_MySQL_GetDatabase().Query(CheckBanCallback, m_szQuery, GetClientUserId(client));
-    
-    g_bBansLoading[client] = true;
+}
+
+public Action Timer_ReloadBans(Handle timer, int client)
+{
+    if(!IsClientConnected(client))
+        return Plugin_Stop;
+
+    char steamid[32];
+    GetClientAuthId(client, AuthId_SteamID64, steamid, 32, true);
+    CheckClientBanStats(client, steamid);
+
+    return Plugin_Stop;
 }
 
 public void LoadClientCallback(Database db, DBResultSet results, const char[] error, int userid)
@@ -362,19 +315,17 @@ public void LoadClientCallback(Database db, DBResultSet results, const char[] er
 
     if(results == null || error[0])
     {
-        g_bAuthLoading[client] = false;
         MG_Core_LogError("User", "LoadClientCallback", "SQL Error:  %s -> \"%L\"", error, client);
-        CreateTimer(2.0, Timer_ReAuthorize, client, TIMER_FLAG_NO_MAPCHANGE);
+        CreateTimer(1.0, Timer_ReloadAuth, client, TIMER_FLAG_NO_MAPCHANGE);
         return;
     }
 
     if(results.RowCount <= 0 || !results.FetchRow())
     {
         InsertNewUserData(client);
-        CallAuthForward(client);
         return;
     }
-    
+
     g_bAuthLoading[client] = false;
     g_bAuthLoaded[client]  = true;
 
@@ -442,14 +393,8 @@ public void LoadClientCallback(Database db, DBResultSet results, const char[] er
 
 void InsertNewUserData(int client)
 {
-    char steamid[32];
-    if(!GetClientAuthId(client, AuthId_SteamID64, steamid, 32, true))
-    {
-        KickClient(client, "系统无法获取您的SteamID");
-        return;
-    }
-
-    char m_szQuery[128];
+    char steamid[32], m_szQuery[128];
+    GetClientAuthId(client, AuthId_SteamID64, steamid, 32, true);
     FormatEx(m_szQuery, 128, "INSERT INTO dxg_users (`steamid`, `firstjoin`) VALUES ('%s', %d);", steamid, GetTime());
     MG_MySQL_GetDatabase().Query(InserUserCallback, m_szQuery, GetClientUserId(client));
 }
@@ -459,14 +404,12 @@ public void InserUserCallback(Database db, DBResultSet results, const char[] err
     int client = GetClientOfUserId(userid);
     if(!client)
         return;
-    
+
     // Refresh client
-    g_bAuthLoading[client] = false;
-    g_bAuthLoaded[client]  = false;
-    CreateTimer(2.0, Timer_ReAuthorize, client, TIMER_FLAG_NO_MAPCHANGE);
-    
+    CreateTimer(1.0, Timer_ReloadAuth, client, TIMER_FLAG_NO_MAPCHANGE);
+
     if(results == null || error[0])
-        MG_Core_LogError("User", "CheckBanCallback", "SQL Error:  %s -> \"%L\"", error, client);
+        MG_Core_LogError("User", "InserUserCallback", "SQL Error:  %s -> \"%L\"", error, client);
 }
 
 public void CheckBanCallback(Database db, DBResultSet results, const char[] error, int userid)
@@ -474,18 +417,14 @@ public void CheckBanCallback(Database db, DBResultSet results, const char[] erro
     int client = GetClientOfUserId(userid);
     if(!client)
         return;
-    
-    g_bBansLoading[client] = false;
 
     if(results == null || error[0])
     {
         MG_Core_LogError("User", "CheckBanCallback", "SQL Error:  %s -> \"%L\"", error, client);
-        CreateTimer(2.0, Timer_ReAuthorize, client, TIMER_FLAG_NO_MAPCHANGE);
+        CreateTimer(1.0, Timer_ReloadBans, client, TIMER_FLAG_NO_MAPCHANGE);
         return;
     }
 
-    g_bBanChecked[client] = true;
-    
     if(results.RowCount <= 0)
         return;
 
@@ -551,7 +490,7 @@ public void BanClientCallback(Database db, DBResultSet results, const char[] err
         MG_Core_LogError("User", "BanClientCallback", "SQL Error:  %s -> \n%s", error, query);
         return;
     }
-    
+
     if(!target || !IsClientConnected(target))
         return;
     
@@ -591,93 +530,19 @@ void CallDataForward(int client)
     Call_Finish();
 }
 
-/*  Check client validation  */
-stock bool IsValidClient(int index)
+bool IsValidClient(int index)
 {
     return (index > 0 && index <= MaxClients && IsClientInGame(index) && !IsFakeClient(index) && !IsClientSourceTV(index));
 }
 
-/* String.PadLeft */
-stock void StringPad(int number, int length, char c, char[] output, int maxLen)
+int FindClientByIdentity(const char[] steamid)
 {
-    char[] buffer = new char[length];
-    IntToString(number, buffer, length);
-
-    int padLen = length - strlen(buffer);
-    for(int i = 0; i < padLen; ++i)
-    {
-        output[i] = c;
-    }
-    output[padLen] = '\0';
-
-    StrCat(output, maxLen, buffer);
-}
-
-/* return tick or cross */
-stock void TickOrCross(bool res, char[] output)
-{
-    strcopy(output, 4, res ? "✔" : "✘");
-}
-
-/*  Convert Steam64 To SteamID  */ 
-stock void Steam64toSteamID(const char[] friendId, char[] steamid, int iLen)
-{
-    char[] szBase = "76561197960265728";
-    char szSteam[18], szAccount[18];
-    int iBorrow, iY, iZ, iTemp;
-
-    strcopy(szSteam, 18, friendId);
-
-    if(CharToNumber(szSteam[16]) % 2 == 1)
-    {
-        iY = 1;
-        szSteam[16] = NumberToChar(CharToNumber(szSteam[16]) - 1);
-    }
-    
-    for(int k = 16; k >= 0; k--)
-    {
-        if(iBorrow > 0)
-        {
-            iTemp = CharToNumber(szSteam[k]) - 1;
-            
-            if(iTemp >= CharToNumber(szBase[k]))
-            {
-                iBorrow = 0;
-                szAccount[k] = NumberToChar(iTemp - CharToNumber(szBase[k]));
-            }
-            else
-            {
-                iBorrow = 1;
-                szAccount[k] = NumberToChar((iTemp + 10) - CharToNumber(szBase[k]));
-            }
-        }
-        else
-        {
-            if(CharToNumber(szSteam[k]) >= CharToNumber(szBase[k]))
-            {
-                iBorrow = 0;
-                szAccount[k] = NumberToChar(CharToNumber(szSteam[k]) - CharToNumber(szBase[k]));
-            }
-            else
-            {
-                iBorrow = 1;
-                szAccount[k] = NumberToChar((CharToNumber(szSteam[k]) + 10) - CharToNumber(szBase[k]));
-            }
-        }
-    }
-    
-    iZ = StringToInt(szAccount);
-    iZ /= 2;
-    
-    FormatEx(steamid, iLen, "STEAM_1:%d:%d", iY, iZ);
-}
-
-stock int NumberToChar(const int iNum)
-{
-    return '0' + ((iNum >= 0 && iNum <= 9) ? iNum : 0);
-}
-
-stock int CharToNumber(const int cNum)
-{
-    return (cNum >= '0' && cNum <= '9') ? (cNum - '0') : 0;
+    char auth[32];
+    for(int client = 1; client <= MaxClients; ++ client)
+        if(IsClientAuthorized(client))
+            if(GetClientAuthId(client, AuthId_SteamID64, auth, 32, true))
+                if(strcmp(steamid, auth) == 0)
+                    return client;
+                
+    return -1;
 }
