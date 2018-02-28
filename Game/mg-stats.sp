@@ -151,7 +151,7 @@ public void OnClientDataChecked(int client, int uid)
     
     if(!MG_MySQL_IsConnected())
     {
-        CreateTimer(3.0, Timer_Retry, client, TIMER_FLAG_NO_MAPCHANGE);
+        CreateTimer(1.0, Timer_Retry, client, TIMER_FLAG_NO_MAPCHANGE);
         return;
     }
 
@@ -178,6 +178,7 @@ public void OnClientDisconnect(int client)
     pack.WriteCell(MG_Users_UserIdentity(client));
     pack.WriteCell(g_iTrackingId[client]);
     pack.WriteString(m_szQuery);
+    pack.WriteFloat(GetEngineTime());
     pack.Reset();
     MG_MySQL_GetDatabase().Query(SaveClientCallback, m_szQuery, pack);
 }
@@ -188,6 +189,7 @@ public void SaveClientCallback(Database db, DBResultSet results, const char[] er
     int tid = pack.ReadCell();
     char QueryString[256];
     pack.ReadString(QueryString, 256);
+    float processed = GetEngineTime() - pack.ReadFloat();
     delete pack;
 
     if(results == null || error[0])
@@ -198,6 +200,9 @@ public void SaveClientCallback(Database db, DBResultSet results, const char[] er
     
     if(results.FetchRow() && results.FetchInt(0) != 7)
         MG_Core_LogError("Stats", "SaveClientCallback", "SQL Error:  SQL result is wrong [%d] -> uid[%d] tid[%d] -> %s", results.FetchInt(0), uid, tid, QueryString);
+
+    if(processed >= 1.5)
+        MG_Core_LogMessage("Stats", "SaveClientCallback", "SQL Processed too slow -> uid[%d] tid[%d] -> %s", uid, tid);
 }
 
 public Action Timer_Retry(Handle timer, int client)
@@ -206,7 +211,7 @@ public Action Timer_Retry(Handle timer, int client)
         return Plugin_Stop;
     
     OnClientDataChecked(client, MG_Users_UserIdentity(client));
-    
+
     return Plugin_Stop;
 }
 
@@ -260,7 +265,7 @@ public void InserUserCallback(Database db, DBResultSet results, const char[] err
     int client = GetClientOfUserId(userid);
     if(!client)
         return;
-    
+
     CreateTimer(1.0, Timer_Retry, client, TIMER_FLAG_NO_MAPCHANGE);
 
     if(results == null || error[0])
