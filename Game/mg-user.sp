@@ -174,9 +174,6 @@ public int Native_BanIdentity(Handle plugin, int numParams)
 
 public void OnPluginStart()
 {
-    // console command
-    AddCommandListener(Command_Who, "sm_who");
-
     // global forwards
     g_hOnUMAuthChecked = CreateGlobalForward("OnClientAuthChecked", ET_Ignore, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell);
     g_hOnUMDataChecked = CreateGlobalForward("OnClientDataChecked", ET_Ignore, Param_Cell, Param_Cell);
@@ -528,11 +525,6 @@ void CallDataForward(int client)
     Call_PushCell(client);
     Call_PushCell(g_iUserId[client]);
     Call_Finish();
-}
-
-bool IsValidClient(int index)
-{
-    return (index > 0 && index <= MaxClients && IsClientInGame(index) && !IsFakeClient(index) && !IsClientSourceTV(index));
 }
 
 int FindClientByIdentity(const char[] steamid)
