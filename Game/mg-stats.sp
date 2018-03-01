@@ -187,22 +187,31 @@ public void SaveClientCallback(Database db, DBResultSet results, const char[] er
 {
     int uid = pack.ReadCell();
     int tid = pack.ReadCell();
-    char QueryString[256];
-    pack.ReadString(QueryString, 256);
+    char m_szQuery[256];
+    pack.ReadString(m_szQuery, 256);
     float processed = GetEngineTime() - pack.ReadFloat();
-    delete pack;
 
     if(results == null || error[0])
     {
-        MG_Core_LogError("Stats", "SaveClientCallback", "SQL Error:  %s -> uid[%d] tid[%d] -> %s", error, uid, tid, QueryString);
+        if(strcmp(error, "Lost connection to MySQL server during query") == 0)
+        {
+            pack.Reset();
+            MG_MySQL_GetDatabase().Query(SaveClientCallback, m_szQuery, pack);
+            MG_Core_LogMessage("Stats", "SaveClientCallback", "Retry on Lost connection -> uid[%d] tid[%d] -> %s", uid, tid, m_szQuery);
+            return;
+        }
+        delete pack;
+        MG_Core_LogError("Stats", "SaveClientCallback", "SQL Error: %s -> uid[%d] tid[%d] -> %s", error, uid, tid, m_szQuery);
         return;
     }
+
+    delete pack;
     
     if(results.FetchRow() && results.FetchInt(0) != 7)
-        MG_Core_LogError("Stats", "SaveClientCallback", "SQL Error:  SQL result is wrong [%d] -> uid[%d] tid[%d] -> %s", results.FetchInt(0), uid, tid, QueryString);
+        MG_Core_LogError("Stats", "SaveClientCallback", "SQL Error: SQL result is wrong [%d] -> uid[%d] tid[%d] -> %s", results.FetchInt(0), uid, tid, QueryString);
 
     if(processed >= 1.5)
-        MG_Core_LogMessage("Stats", "SaveClientCallback", "SQL Processed too slow -> uid[%d] tid[%d] -> %s", uid, tid);
+        MG_Core_LogMessage("Stats", "SaveClientCallback", "SQL Processed too slow -> uid[%d] tid[%d] -> %f seconds", uid, tid, processed);
 }
 
 public Action Timer_Retry(Handle timer, int client)
@@ -223,7 +232,7 @@ public void LoadClientCallback(Database db, DBResultSet results, const char[] er
 
     if(results == null || error[0])
     {
-        MG_Core_LogError("Stats", "LoadClientCallback", "SQL Error:  %s -> \"%L\"", error, client);
+        MG_Core_LogError("Stats", "LoadClientCallback", "SQL Error: %s -> \"%L\"", error, client);
         CreateTimer(3.0, Timer_Retry, client, TIMER_FLAG_NO_MAPCHANGE);
         return;
     }
@@ -269,7 +278,7 @@ public void InserUserCallback(Database db, DBResultSet results, const char[] err
     CreateTimer(1.0, Timer_Retry, client, TIMER_FLAG_NO_MAPCHANGE);
 
     if(results == null || error[0])
-        MG_Core_LogError("Stats", "InserUserCallback", "SQL Error:  %s -> \"%L\"", error, client);
+        MG_Core_LogError("Stats", "InserUserCallback", "SQL Error: %s -> \"%L\"", error, client);
 }
 
 public void InserAnalyticsCallback(Database db, DBResultSet results, const char[] error, int userid)
@@ -280,7 +289,7 @@ public void InserAnalyticsCallback(Database db, DBResultSet results, const char[
 
     if(results == null || error[0])
     {
-        MG_Core_LogError("Stats", "InserAnalyticsCallback", "SQL Error:  %s -> \"%L\"", error, client);
+        MG_Core_LogError("Stats", "InserAnalyticsCallback", "SQL Error: %s -> \"%L\"", error, client);
         return;
     }
     
