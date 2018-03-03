@@ -208,7 +208,7 @@ public void SaveClientCallback(Database db, DBResultSet results, const char[] er
     delete pack;
     
     if(results.FetchRow() && results.FetchInt(0) != 7)
-        MG_Core_LogError("Stats", "SaveClientCallback", "SQL Error: SQL result is wrong [%d] -> uid[%d] tid[%d] -> %s", results.FetchInt(0), uid, tid, QueryString);
+        MG_Core_LogError("Stats", "SaveClientCallback", "SQL Error: SQL result is wrong [%d] -> uid[%d] tid[%d] -> %s", results.FetchInt(0), uid, tid, m_szQuery);
 
     if(processed >= 1.5)
         MG_Core_LogMessage("Stats", "SaveClientCallback", "SQL Processed too slow -> uid[%d] tid[%d] -> %f seconds", uid, tid, processed);

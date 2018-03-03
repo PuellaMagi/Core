@@ -197,7 +197,7 @@ public int Native_LogMessage(Handle plugin, int numParams)
 public void OnPluginStart()
 {
     // queries queue
-    g_aQueriesQueue = new ArrayList(ByteCountToCell(2048));
+    g_aQueriesQueue = new ArrayList(ByteCountToCells(2048));
 
     // forwards
     g_hOnAvailable = CreateGlobalForward("MG_Core_OnAvailable",  ET_Ignore, Param_Cell, Param_Cell);
@@ -260,7 +260,7 @@ public void OnConnected(Database db, const char[] error, int retry)
     // process queue
     while(g_aQueriesQueue.Length)
     {
-        g_aQueriesQueue.GetString(m_szQuery, 2048);
+        g_aQueriesQueue.GetString(0, m_szQuery, 2048);
         g_aQueriesQueue.Erase(0);
         
         DataPack data = new DataPack();
