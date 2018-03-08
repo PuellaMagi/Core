@@ -35,17 +35,23 @@ while(file_exists($lockfile))
 
 if($redis->connect($_config['redis']['host'], $_config['redis']['port'], 1, NULL, 200)) {
 
-    $redis->auth($_config['redis']['pswd']);
-    $redis->select(1);
-    $redis->setOption(Redis::OPT_SERIALIZER, Redis::SERIALIZER_PHP);
-    $redis->setOption(Redis::OPT_PREFIX, 'dashboard_cache_');
-    $cache = true;
-    
-    //$redis->flushDB();
+    if($redis->auth($_config['redis']['pswd'])){
+        
+        $redis->select(1);
+        $redis->setOption(Redis::OPT_SERIALIZER, Redis::SERIALIZER_PHP);
+        $redis->setOption(Redis::OPT_PREFIX, 'dashboard_cache_');
+        $cache = true;
+        
+        //$redis->flushDB();
 
-    // load cache
-    $global = json_decode($redis->get('dashboard_global'), true);
-    $server = json_decode($redis->get('dashboard_server'), true);
+        // load cache
+        $global = json_decode($redis->get('dashboard_global'), true);
+        $server = json_decode($redis->get('dashboard_server'), true);
+        
+    }
+    else{
+        LogMessage("Redis Auth ERROR!");
+    }
 }
 
 // rebuild cache
@@ -128,8 +134,9 @@ foreach($server as $srv)
         $retry = 0;
         $serverInfo = null;
 
-        if(!file_exists($lockfile))
+        if(!file_exists($lockfile)){
             file_put_contents($lockfile, "Source Engine Query");
+        }
 
         do
         {
