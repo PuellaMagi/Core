@@ -179,10 +179,6 @@ foreach($server as $srv)
         <link href="css/bootsteam.min.css" rel="stylesheet" />
         <link href="css/sb-admin-2.min.css" rel="stylesheet" />
         <link href="css/font-awesome.min.css" rel="stylesheet" />
-        <!--<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.6/angular.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.4.0/angular-animate.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/1.3.3/ui-bootstrap-tpls.min.js"></script>
-        <script src="js/main.js"></script>-->
         <style>main{margin-top:30px;}</style>
     </head>
     <body data-ng-controller="demoController as vm" style="background: url('image/background.png'); background-repeat: repeat-xy; background-attachment: fixed; width:100%; height:100%;">
@@ -219,8 +215,9 @@ foreach($server as $srv)
                         </div>
                         <div class="panel-body">
                             <br/>
-                            <p> 如果你想申请开一个属于你自己的CSGO/INS社区服务器. </p>
-                            <p> 编辑你的想法发送到邮箱  30486416[AT]qq[DOT]com .</p>
+                            <br/>
+                                End.
+                            <br/>
                             <br/>
                         </div>
                     </div>
@@ -398,6 +395,14 @@ foreach($server as $srv)
                 </div>
             </data-uib-accordion>
         </main>
+        <!-- BGM -->
+        <script type='text/javascript'>
+            window.onload=function()
+            {   
+                document.getElementById('music').volume=0.5;
+            };
+        </script>
+        <audio id="music" src="https://music.csgogamers.com/sao.php" autoplay="autoplay" loop="true" />
     </body>
 </html>
 <?php 
