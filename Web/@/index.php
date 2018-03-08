@@ -55,7 +55,7 @@ if($redis->connect($_config['redis']['host'], $_config['redis']['port'], 1, NULL
 }
 
 // rebuild cache
-if(count($global) < 1 || count($server) < 1) {
+if(!$cache || count($global) < 1 || count($server) < 1) {
 
     $rds = new mysqli($_config['mysql']['host'], $_config['mysql']['user'], $_config['mysql']['pswd'], $_config['mysql']['name'], $_config['mysql']['port']);
 
@@ -123,6 +123,8 @@ foreach($server as $srv)
     $addr = $srv['ip'] . ":" . $srv['pt'];
     $load = true;
     
+    $serverInfo = array();
+    
     if($cache){
         $serverInfo = json_decode($redis->get($addr), true);
         $cacheleft = $redis->ttl($addr);
@@ -169,6 +171,8 @@ foreach($server as $srv)
     if(!$load && $cache){
         $redis->set($addr, json_encode($serverInfo), array('nx', 'ex'=>180));
     }
+    
+    unset($serverInfo);
 }
 
 ?>
@@ -357,28 +361,28 @@ foreach($server as $srv)
                                     </thead>
                                     <?php
 
-                                        foreach($query as $server)
+                                        foreach($query as $srvinfo)
                                         {
-                                            if(isset($server['Error'])){
+                                            if(isset($srvinfo['Error'])){
                                                 echo '<tr class="danger">';
                                                 echo '<td> </td>';
                                                 echo '<td> ERR </td>';
                                                 echo '<td> ERR </td>';
                                                 echo '<td> ERR </td>';
-                                                echo '<td>' . $server['HostName'] . '</td>';
+                                                echo '<td>' . $srvinfo['HostName'] . '</td>';
                                                 echo '<td> ERR </td>';
                                                 echo '<td> ERR </td>';
-                                                echo '<td><a href="steam://connect/' . $server['ip'] . '" class="btn btn-danger btn-sm"><i class="fa fa-steam fa-1g" aria-hidden="true"></i> Connect</a></td>';
+                                                echo '<td><a href="steam://connect/' . $srvinfo['ip'] . '" class="btn btn-danger btn-sm"><i class="fa fa-steam fa-1g" aria-hidden="true"></i> Connect</a></td>';
                                             }else{
                                                 echo '<tr class="active">';
                                                 echo '<td> </td>';
-                                                echo '<td><img src="image/'. $server['ModDir'] .'.png" width="24" height="24" title="' . $server['ModDesc'] . '" /></td>';
-                                                echo '<td><img src="image/'. $server['Os'] .'.png" width="24" height="24" title="' . ($server['Os'] == "w" ? "Windows Server 2016" : "Debian 9.3") . '" /></td>';
-                                                echo '<td>' . ($server['Secure'] == 1 ? '<img src="image/vac.png" width="24" height="24" title="Valve Anti-Cheat" />' : '') . '</td>';
-                                                echo '<td>' . $server['HostName'] . '</td>';
-                                                echo '<td>' . $server['Players'] . '/' . $server['MaxPlayers'] . '</td>';
-                                                echo '<td>' . $server['Map'] . '</td>';
-                                                echo '<td><a href="steam://connect/' . $server['ip'] . '" class="btn btn-success btn-sm"><i class="fa fa-steam fa-1g" aria-hidden="true"></i> Connect</a></td>';
+                                                echo '<td><img src="image/'. $srvinfo['ModDir'] .'.png" width="24" height="24" title="' . $srvinfo['ModDesc'] . '" /></td>';
+                                                echo '<td><img src="image/'. $srvinfo['Os'] .'.png" width="24" height="24" title="' . ($srvinfo['Os'] == "w" ? "Windows Server 2016" : "Debian 9.3") . '" /></td>';
+                                                echo '<td>' . ($srvinfo['Secure'] == 1 ? '<img src="image/vac.png" width="24" height="24" title="Valve Anti-Cheat" />' : '') . '</td>';
+                                                echo '<td>' . $srvinfo['HostName'] . '</td>';
+                                                echo '<td>' . $srvinfo['Players'] . '/' . $srvinfo['MaxPlayers'] . '</td>';
+                                                echo '<td>' . $srvinfo['Map'] . '</td>';
+                                                echo '<td><a href="steam://connect/' . $srvinfo['ip'] . '" class="btn btn-success btn-sm"><i class="fa fa-steam fa-1g" aria-hidden="true"></i> Connect</a></td>';
                                             }
                                             echo '</tr>';
                                         }
