@@ -11,6 +11,7 @@ FILE=$COUNT-$5.7z
 echo " "
 echo "*** Trigger build ***"
 echo " "
+wget "https://github.com/dordnung/System2/raw/v2.6/system2.inc" -q -O Game/include/system2.inc
 wget "http://www.sourcemod.net/latest.php?version=$1&os=linux" -q -O sourcemod.tar.gz
 tar -xzf sourcemod.tar.gz
 
@@ -35,6 +36,7 @@ addons/sourcemod/scripting/spcomp -E -v0 addons/sourcemod/scripting/mg-stats.sp 
 addons/sourcemod/scripting/spcomp -E -v0 addons/sourcemod/scripting/mg-user.sp -o"build/Game/plugins/mg-user.smx"
 addons/sourcemod/scripting/spcomp -E -v0 addons/sourcemod/scripting/mg-motd.sp -o"build/Game/plugins/mg-motd.smx"
 addons/sourcemod/scripting/spcomp -E -v0 addons/sourcemod/scripting/mg-vars.sp -o"build/Game/plugins/mg-vars.smx"
+addons/sourcemod/scripting/spcomp -E -v0 addons/sourcemod/scripting/mg-gotv.sp -o"build/Game/plugins/mg-gotv.smx"
 
 mv Web/* build/Website
 mv Game/* build/Game/scripts
@@ -46,6 +48,7 @@ cd build
 echo -e "Upload file ..."
 lftp -c "open -u $FTP_USER,$FTP_PSWD $FTP_HOST; put -O /PuellaMagi/Core/ $FILE"
 
+if [ "$1" = "1.8" ]; then
 echo "Upload RAW..."
 cd Game/plugins
 lftp -c "open -u $FTP_USER,$FTP_PSWD $FTP_HOST; put -O /PuellaMagi/Raw/ MagicGirl.smx"
@@ -53,3 +56,5 @@ lftp -c "open -u $FTP_USER,$FTP_PSWD $FTP_HOST; put -O /PuellaMagi/Raw/ mg-stats
 lftp -c "open -u $FTP_USER,$FTP_PSWD $FTP_HOST; put -O /PuellaMagi/Raw/ mg-user.smx"
 lftp -c "open -u $FTP_USER,$FTP_PSWD $FTP_HOST; put -O /PuellaMagi/Raw/ mg-motd.smx"
 lftp -c "open -u $FTP_USER,$FTP_PSWD $FTP_HOST; put -O /PuellaMagi/Raw/ mg-vars.smx"
+lftp -c "open -u $FTP_USER,$FTP_PSWD $FTP_HOST; put -O /PuellaMagi/Raw/ mg-gotv.smx"
+fi
