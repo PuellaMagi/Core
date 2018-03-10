@@ -227,7 +227,10 @@ foreach($server as $srv)
                         <div class="panel-body">
                             <br/>
                             <br/>
-                                End.
+                                即日起将关闭所有CSGO服务器.
+                                仅保留一个娱乐休闲养老服.
+                                感谢你的支持,用CG到MG.
+                                xixi~ :)
                             <br/>
                             <br/>
                         </div>
