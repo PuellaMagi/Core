@@ -201,12 +201,12 @@ public void OnBz2Completed(const char[] output, const int size, CMDReturn status
     }
 }
 
-public void OnFTPUploadCompleted(bool finished, const char[] error, float dltotal, float dlnow, float ultotal, float ulnow, DataPack hPack)
+public void OnFTPUploadCompleted(bool finished, const char[] error, float dltotal, float dlnow, float ultotal, float ulnow, DataPack pack)
 {
     pack.Reset();
     char demoname[128];
     pack.ReadString(demoname, 128);
-    delete hPack;
+    delete pack;
 
     if(finished)
     {
@@ -274,7 +274,7 @@ public Action Command_Demo(int client, int args)
     }
 
     PrintToChatAll(" \07*** \x02DEMO \07***  \x10当前DEMO");
-    PrintToChatAll(" \x04[\x0F%s\x04]", g_szDemo)
+    PrintToChatAll(" \x04[\x0F%s\x04]", g_szDemo);
 
     return Plugin_Handled;
 }
@@ -323,7 +323,7 @@ static void CheckAndCleanDir()
     if(!DirExists("recording/bz2"))
         CreateDirectory("recording/bz2", 511);
 
-    OpenDirectory hDirectory;
+    DirectoryListing hDirectory;
     if((hDirectory = OpenDirectory("recording")) != null)
     {
         FileType type = FileType_Unknown;
