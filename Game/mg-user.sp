@@ -178,9 +178,28 @@ public void OnPluginStart()
     g_hOnUMAuthChecked = CreateGlobalForward("OnClientAuthChecked", ET_Ignore, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell, Param_Cell);
     g_hOnUMDataChecked = CreateGlobalForward("OnClientDataChecked", ET_Ignore, Param_Cell, Param_Cell);
 
+    // console command
+    RegConsoleCmd("sm_uid", Command_UID);
+    
     // init console
     g_iUserId[0] = 0;
     g_szUsername[0] = "CONSOLE";
+}
+
+public Action Command_UID(int client, int args)
+{
+    if(!client)
+        return Plugin_Handled;
+    
+    if(g_iUserId[client] < 1)
+    {
+        PrintToChat(client, "***\x04USER\x01***   你的数据尚未加载完毕...");
+        return Plugin_Handled;
+    }
+    
+    PrintToChat(client, "***\x04USER\x01***   \x05你的UserID为\x01[\x04%d\x01]", g_iUserId[client]);
+
+    return Plugin_Handled;
 }
 
 public void OnClientConnected(int client)
