@@ -173,7 +173,7 @@ public void OnClientDisconnect(int client)
     char m_szQuery[512], m_szUsername[32], m_szEscape[64];
     GetClientName(client, m_szUsername, 32);
     MG_MySQL_GetDatabase().Escape(m_szUsername, m_szEscape, 64);
-    FormatEx(m_szQuery, 512, "UPDATE `dxg_users` u, `dxg_stats` s, `dxg_analytics` a SET u.`lastseen` = UNIX_TIMESTAMP(), u.`username` = '%s', s.`connectTimes` = s.`connectTimes` + 1, s.`onlineToday` = s.`onlineToday` + '%d', s.`onlineTotal` = s.`onlineTotal` + '%d', s.`onlineOB` = s.`onlineOB` + '%d', s.`onlinePlay` = s`onlinePlay` + '%d', a.`duration` = '%d' WHERE u.`uid` = '%d' AND s.`uid` = '%d' AND a.`uid` = '%d' AND a.`id` = '%d';", m_szEscape, g_StatsClient[client][STATS_SESSION][iTodayOnlineTime], g_StatsClient[client][STATS_SESSION][iTotalOnlineTime], g_StatsClient[client][STATS_SESSION][iObserveOnlineTime], g_StatsClient[client][STATS_SESSION][iPlayOnlineTime], g_StatsClient[client][STATS_SESSION][iTodayOnlineTime], MG_Users_UserIdentity(client), MG_Users_UserIdentity(client), MG_Users_UserIdentity(client), g_iTrackingId[client]);
+    FormatEx(m_szQuery, 512, "UPDATE `dxg_users` u, `dxg_stats` s, `dxg_analytics` a SET u.`lastseen` = UNIX_TIMESTAMP(), u.`username` = '%s', s.`connectTimes` = s.`connectTimes` + 1, s.`onlineToday` = s.`onlineToday` + '%d', s.`onlineTotal` = s.`onlineTotal` + '%d', s.`onlineOB` = s.`onlineOB` + '%d', s.`onlinePlay` = s.`onlinePlay` + '%d', a.`duration` = '%d' WHERE u.`uid` = '%d' AND s.`uid` = '%d' AND a.`uid` = '%d' AND a.`id` = '%d';", m_szEscape, g_StatsClient[client][STATS_SESSION][iTodayOnlineTime], g_StatsClient[client][STATS_SESSION][iTotalOnlineTime], g_StatsClient[client][STATS_SESSION][iObserveOnlineTime], g_StatsClient[client][STATS_SESSION][iPlayOnlineTime], g_StatsClient[client][STATS_SESSION][iTodayOnlineTime], MG_Users_UserIdentity(client), MG_Users_UserIdentity(client), MG_Users_UserIdentity(client), g_iTrackingId[client]);
     DataPack pack = new DataPack();
     pack.WriteCell(MG_Users_UserIdentity(client));
     pack.WriteCell(g_iTrackingId[client]);
@@ -207,10 +207,10 @@ public void SaveClientCallback(Database db, DBResultSet results, const char[] er
 
     delete pack;
     
-    if(results.FetchRow() && results.FetchInt(0) != 7)
-        MG_Core_LogError("Stats", "SaveClientCallback", "SQL Error: SQL result is wrong [%d] -> uid[%d] tid[%d] -> %s", results.FetchInt(0), uid, tid, m_szQuery);
+    if(results.AffectedRows != 3)
+        MG_Core_LogError("Stats", "SaveClientCallback", "SQL Error: affected rows is wrong [%d] -> uid[%d] tid[%d] -> %s", results.AffectedRows, uid, tid, m_szQuery);
 
-    if(processed >= 1.5)
+    if(processed >= 0.5)
         MG_Core_LogMessage("Stats", "SaveClientCallback", "SQL Processed too slow -> uid[%d] tid[%d] -> %f seconds", uid, tid, processed);
 }
 
