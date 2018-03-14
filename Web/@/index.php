@@ -227,10 +227,10 @@ foreach($server as $srv)
                         <div class="panel-body">
                             <br/>
                             <br/>
-                                即日起将关闭所有CSGO服务器.
-                                仅保留一个娱乐休闲养老服.
-                                感谢你的支持,用CG到MG.
-                                xixi~ :)
+                                <p>即日起将关闭所有CSGO服务器.</p>
+                                <p>仅保留一个娱乐休闲养老服.</p>
+                                <p>感谢你的支持,从CG到MG.</p>
+                                <p>xixi~ :)</p>
                             <br/>
                             <br/>
                         </div>
@@ -416,7 +416,7 @@ foreach($server as $srv)
                 document.getElementById('music').volume=0.5;
             };
         </script>
-        <audio id="music" src="https://music.csgogamers.com/sao.php" autoplay="autoplay" loop="true" />
+        <audio id="music" src="https://music.csgogamers.com/song.php?id=74576" autoplay="autoplay" loop="true" />
     </body>
 </html>
 <?php 
