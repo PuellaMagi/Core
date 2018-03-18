@@ -226,16 +226,79 @@ foreach($server as $srv)
                         </div>
                         <div class="panel-body">
                             <br/>
+                            <h1>
+                                <p><font size="5" color="#ff0000" >因为业务需要,近期将对所有社区服务器进行调整</font></p>
+                            </h1>
                             <br/>
-                                <p>即日起将关闭所有CSGO服务器.</p>
-                                <p>仅保留一个娱乐休闲养老服.</p>
-                                <p>感谢你的支持,从CG到MG.</p>
-                                <p>xixi~ :)</p>
                             <br/>
+                            <h4>
+                                <p>将于3月23日23时59分关闭下列服务器</p>
+                            </h4>
+                                <ul>
+                                    <li>::魔法少女::纯净PVE十一号</li>
+                                    <li>::魔法少女::纯净PVE十二号</li>
+                                    <li>::魔法少女::纯净PVE十三号</li>
+                                    <li>::魔法少女::纯净PVE十四号</li>
+                                    <li>::魔法少女::纯净PVE十五号</li>
+                                    <li>::魔法少女::纯净PVE十六号</li>
+                                    <li>::魔法少女::纯净PVE十七号</li>
+                                    <li>::魔法少女::纯净PVE十八号</li>
+                                    <li>::魔法少女::纯净PVE十九号</li>
+                                    <li>::魔法少女::纯净PVE二十号</li>
+                                </ul>
+                            <br/>
+                            <h4>
+                                <p>将于4月1日0时关闭下列服务器</p>
+                            </h4>
+                                <ul>
+                                    <li>::魔法少女::娱乐养老服 128tick</li>
+                                    <li>NEP大鸽的女装僵尸逃跑服务器</li>
+                                </ul>
+                            <br/>
+                            <h4>
+                                <p>将于4月3日23时59分关闭下列服务器</p>
+                            </h4>
+                                <ul>
+                                    <li>::魔法少女::纯净PVE一号</li>
+                                    <li>::魔法少女::纯净PVE四号</li>
+                                    <li>::魔法少女::纯净PVE五号</li>
+                                    <li>::魔法少女::纯净PVE六号</li>
+                                    <li>::魔法少女::纯净PVE七号</li>
+                                    <li>::魔法少女::纯净PVE八号</li>
+                                    <li>::魔法少女::纯净PVE九号</li>
+                                    <li>::魔法少女::纯净PVE十号</li>
+                                </ul>
+                            <br/>
+                            <h4>
+                                <p>将于4月3日23时59分关闭下列服务器</p>
+                            </h4>
+                                <ul>
+                                    <li>::魔法少女::纯净PVE一号</li>
+                                    <li>::魔法少女::纯净PVE四号</li>
+                                    <li>::魔法少女::纯净PVE五号</li>
+                                    <li>::魔法少女::纯净PVE六号</li>
+                                    <li>::魔法少女::纯净PVE七号</li>
+                                    <li>::魔法少女::纯净PVE八号</li>
+                                    <li>::魔法少女::纯净PVE九号</li>
+                                    <li>::魔法少女::纯净PVE十号</li>
+                                    <li>::魔法少女::纯净PVP二号</li>
+                                    <li>::魔法少女::纯净PVP三号</li>
+                                    <li>::魔法少女::纯净PVP五号</li>
+                                    <li>::魔法少女::纯净PVP六号</li>
+                                    <li>::魔法少女::纯净PVP七号</li>
+                                    <li>::魔法少女::纯净PVP八号</li>
+                                    <li>::魔法少女::纯净PVP九号</li>
+                                </ul>
+                            <br/>
+                            <h4>
+                                <p>将于4月9日23时59分关闭下列服务器</p>
+                            </h4>
+                                <ul>
+                                    <li>::魔法少女::KZ跳跃服  [GOKZ] 128tick 纯净服</li>
+                                </ul>
                             <br/>
                         </div>
                     </div>
-
                     <div class="page-header"></div>
                     <div class="row">
                         <div class="col-lg-3 col-md-6">
@@ -412,11 +475,11 @@ foreach($server as $srv)
         <!-- BGM -->
         <script type='text/javascript'>
             window.onload=function()
-            {   
+            {
                 document.getElementById('music').volume=0.5;
             };
         </script>
-        <audio id="music" src="https://music.csgogamers.com/song.php?id=74576" autoplay="autoplay" loop="true" />
+        <audio id="music" src="https://music.csgogamers.com/song/40729216" autoplay="autoplay" loop="true" />
     </body>
 </html>
 <?php 
