@@ -93,7 +93,7 @@ if(!$cache || count($global) < 1 || count($server) < 1) {
         $global['players'] = $row['players'];
 
         //get server
-        $res = $rds->query("SELECT * FROM `dxg_servers` WHERE ip not like '127.0.0.1' ORDER BY sid");
+        $res = $rds->query("SELECT * FROM `dxg_servers` WHERE `display` = '1' ORDER BY `mod`, `sid` ASC");
         $queries++;
         while($row = $res->fetch_array())
         {
@@ -222,80 +222,15 @@ foreach($server as $srv)
                     <div class="page-header"></div>
                     <div class="panel panel-info">
                         <div class="panel-heading">
-                            <h3 class="panel-title">公告板</h3>
+                            <h3 class="panel-title">公告板 ;)</h3>
                         </div>
                         <div class="panel-body">
                             <br/>
+                            <br/>
                             <h1>
-                                <p><font size="5" color="#ff0000" >因为业务需要,近期将对所有社区服务器进行调整</font></p>
+                                <p><font size="5" color="#ff0000">服务器调整中...</font></p>
                             </h1>
                             <br/>
-                            <br/>
-                            <h4>
-                                <p>将于3月23日23时59分关闭下列服务器</p>
-                            </h4>
-                                <ul>
-                                    <li>::魔法少女::纯净PVE十一号</li>
-                                    <li>::魔法少女::纯净PVE十二号</li>
-                                    <li>::魔法少女::纯净PVE十三号</li>
-                                    <li>::魔法少女::纯净PVE十四号</li>
-                                    <li>::魔法少女::纯净PVE十五号</li>
-                                    <li>::魔法少女::纯净PVE十六号</li>
-                                    <li>::魔法少女::纯净PVE十七号</li>
-                                    <li>::魔法少女::纯净PVE十八号</li>
-                                    <li>::魔法少女::纯净PVE十九号</li>
-                                    <li>::魔法少女::纯净PVE二十号</li>
-                                </ul>
-                            <br/>
-                            <h4>
-                                <p>将于4月1日0时关闭下列服务器</p>
-                            </h4>
-                                <ul>
-                                    <li>::魔法少女::娱乐养老服 128tick</li>
-                                    <li>NEP大鸽的女装僵尸逃跑服务器</li>
-                                </ul>
-                            <br/>
-                            <h4>
-                                <p>将于4月3日23时59分关闭下列服务器</p>
-                            </h4>
-                                <ul>
-                                    <li>::魔法少女::纯净PVE一号</li>
-                                    <li>::魔法少女::纯净PVE四号</li>
-                                    <li>::魔法少女::纯净PVE五号</li>
-                                    <li>::魔法少女::纯净PVE六号</li>
-                                    <li>::魔法少女::纯净PVE七号</li>
-                                    <li>::魔法少女::纯净PVE八号</li>
-                                    <li>::魔法少女::纯净PVE九号</li>
-                                    <li>::魔法少女::纯净PVE十号</li>
-                                </ul>
-                            <br/>
-                            <h4>
-                                <p>将于4月3日23时59分关闭下列服务器</p>
-                            </h4>
-                                <ul>
-                                    <li>::魔法少女::纯净PVE一号</li>
-                                    <li>::魔法少女::纯净PVE四号</li>
-                                    <li>::魔法少女::纯净PVE五号</li>
-                                    <li>::魔法少女::纯净PVE六号</li>
-                                    <li>::魔法少女::纯净PVE七号</li>
-                                    <li>::魔法少女::纯净PVE八号</li>
-                                    <li>::魔法少女::纯净PVE九号</li>
-                                    <li>::魔法少女::纯净PVE十号</li>
-                                    <li>::魔法少女::纯净PVP二号</li>
-                                    <li>::魔法少女::纯净PVP三号</li>
-                                    <li>::魔法少女::纯净PVP五号</li>
-                                    <li>::魔法少女::纯净PVP六号</li>
-                                    <li>::魔法少女::纯净PVP七号</li>
-                                    <li>::魔法少女::纯净PVP八号</li>
-                                    <li>::魔法少女::纯净PVP九号</li>
-                                </ul>
-                            <br/>
-                            <h4>
-                                <p>将于4月9日23时59分关闭下列服务器</p>
-                            </h4>
-                                <ul>
-                                    <li>::魔法少女::KZ跳跃服  [GOKZ] 128tick 纯净服</li>
-                                </ul>
                             <br/>
                         </div>
                     </div>
@@ -334,7 +269,7 @@ foreach($server as $srv)
                                         <i class="col-xs-3 fa fa-gamepad fa-5x" aria-hidden="true"></i>
                                         <div class="col-xs-9 text-right">
                                             <div class="huge"><?php echo $global['active']; ?></div>
-                                            本月活跃玩家(人)
+                                            近期活跃玩家(人)
                                         </div>
                                     </div>
                                 </div>
@@ -375,7 +310,7 @@ foreach($server as $srv)
                                         <!--<i class="fa fa-globe" aria-hidden="true"></i>-->
                                         <div class="col-xs-9 text-right">
                                             <div class="huge"><?php echo (ceil((time()-1516536000)/3600)); ?></div>
-                                            服务器已运行(小时)
+                                            服务器运行(小时)
                                         </div>
                                     </div>
                                 </div>
