@@ -414,7 +414,7 @@ foreach($server as $srv)
                 document.getElementById('music').volume=0.5;
             };
         </script>
-        <audio id="music" src="https://music.csgogamers.com/song/40729216" autoplay="autoplay" loop="true" />
+        <audio id="music" src="https://music.csgogamers.com/song/5056059" autoplay="autoplay" loop="true" />
     </body>
 </html>
 <?php 
