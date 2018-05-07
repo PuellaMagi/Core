@@ -460,6 +460,7 @@ public void CheckBanCallback(Database db, DBResultSet results, const char[] erro
         
         // if ban has expired
         if(GetTime() > (bCreated + bLength))
+            continue;
         
         // if srv ban and current server id != ban server id
         if(bType == 2 && MG_Core_GetServerId() != bSrv)
