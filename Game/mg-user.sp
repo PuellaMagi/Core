@@ -111,7 +111,7 @@ public int Native_BanClient(Handle plugin, int numParams)
     }
 
     char m_szQuery[1024];
-    FormatEx(m_szQuery, 1024, "INSERT INTO dxg_bans VALUES (DEFAULT, '%s', '%s', '%s', %d, %d, %d, %d, %d, %d, '%s', '%s', -1);", steamid, ip, nickname, GetTime()+length*60, btype, MG_Core_GetServerId(), MG_Core_GetServerModId(), g_iUserId[admin], g_szUsername[admin], bReason);
+    FormatEx(m_szQuery, 1024, "INSERT INTO dxg_bans VALUES (DEFAULT, '%s', '%s', '%s', %d, %d, %d, %d, %d, %d, '%s', '%s', -1);", steamid, ip, nickname, GetTime(), length*60, btype, MG_Core_GetServerId(), MG_Core_GetServerModId(), g_iUserId[admin], g_szUsername[admin], bReason);
     
     DataPack pack = new DataPack();
     pack.WriteCell(admin);
@@ -167,7 +167,7 @@ public int Native_BanIdentity(Handle plugin, int numParams)
     MG_MySQL_GetDatabase().Escape(reason, bReason, 256);
 
     char m_szQuery[1024];
-    FormatEx(m_szQuery, 1024, "INSERT INTO dxg_bans VALUES (DEFAULT, '%s', '%s', '%s', %d, %d, %d, %d, %d, %d, '%s', '%s', -1);", steamIdentity, ip, targetName, GetTime()+length*60, btype, MG_Core_GetServerId(), MG_Core_GetServerModId(), g_iUserId[admin], g_szUsername[admin], bReason);
+    FormatEx(m_szQuery, 1024, "INSERT INTO dxg_bans VALUES (DEFAULT, '%s', '%s', '%s', %d, %d, %d, %d, %d, %d, '%s', '%s', -1);", steamIdentity, ip, targetName, GetTime(), length*60, btype, MG_Core_GetServerId(), MG_Core_GetServerModId(), g_iUserId[admin], g_szUsername[admin], bReason);
 
     MG_MySQL_SaveDatabase(m_szQuery);
 }
@@ -457,6 +457,9 @@ public void CheckBanCallback(Database db, DBResultSet results, const char[] erro
         results.FetchString(5, bReason, 32);
 
         /* process results */
+        
+        // if ban has expired
+        if(GetTime() > (bCreated + bLength))
         
         // if srv ban and current server id != ban server id
         if(bType == 2 && MG_Core_GetServerId() != bSrv)
